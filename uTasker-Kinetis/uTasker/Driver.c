@@ -60,7 +60,7 @@
 /*                          Global driver variables                    */
 /* =================================================================== */
 
-QUEUE_HANDLE DebugHandle = NETWORK_HANDLE;                               // if this is left with this value, debug data can be sent to a network (if supported by application)
+QUEUE_HANDLE DebugHandle;// = NETWORK_HANDLE;                               // if this is left with this value, debug data can be sent to a network (if supported by application)
 IDINFO *que_ids = 0;                                                     // pointer to queue list
 
 /* =================================================================== */
