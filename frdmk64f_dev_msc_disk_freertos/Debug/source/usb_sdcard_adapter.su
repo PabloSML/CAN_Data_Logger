@@ -1,0 +1,6 @@
+../source/usb_sdcard_adapter.c:31:6:BOARD_USB_Disk_Config	16	static
+../source/usb_sdcard_adapter.c:42:9:USB_DeviceMscDiskStorageInit	16	static
+../source/usb_sdcard_adapter.c:57:10:USB_Disk_WriteBlocks	24	static
+../source/usb_sdcard_adapter.c:62:10:USB_Disk_ReadBlocks	24	static
+../source/usb_sdcard_adapter.c:67:10:USB_Disk_GetBlockSize	4	static
+../source/usb_sdcard_adapter.c:72:10:USB_Disk_GetBlockCount	4	static

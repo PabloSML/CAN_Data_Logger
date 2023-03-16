@@ -1,0 +1,8 @@
+F:\Pablo\Documents\MCUXpressoIDE_11.4.1_6260\workspace\frdmk64f_flexcan_loopback\CMSIS/core_cm4.h:1679:22:__NVIC_EnableIRQ	16	static
+F:\Pablo\Documents\MCUXpressoIDE_11.4.1_6260\workspace\frdmk64f_flexcan_loopback\drivers/fsl_common_arm.h:488:24:EnableIRQ	24	static
+F:\Pablo\Documents\MCUXpressoIDE_11.4.1_6260\workspace\frdmk64f_flexcan_loopback\drivers/fsl_flexcan.h:1478:24:FLEXCAN_GetMbStatusFlags	16	static
+F:\Pablo\Documents\MCUXpressoIDE_11.4.1_6260\workspace\frdmk64f_flexcan_loopback\drivers/fsl_flexcan.h:1500:20:FLEXCAN_ClearMbStatusFlags	16	static
+F:\Pablo\Documents\MCUXpressoIDE_11.4.1_6260\workspace\frdmk64f_flexcan_loopback\drivers/fsl_flexcan.h:1670:20:FLEXCAN_EnableMbInterrupts	16	static
+F:\Pablo\Documents\MCUXpressoIDE_11.4.1_6260\workspace\frdmk64f_flexcan_loopback\drivers/fsl_flexcan.h:1692:20:FLEXCAN_DisableMbInterrupts	16	static
+../source/flexcan_loopback.c:49:6:CAN0_ORed_Message_buffer_IRQHandler	16	static
+../source/flexcan_loopback.c:73:5:main	56	static

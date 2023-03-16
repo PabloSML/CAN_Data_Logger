@@ -1,0 +1,13 @@
+../usb/device/class/msc/usb_device_msc.c:188:21:USB_DeviceMscAllocateHandle	48	static
+../usb/device/class/msc/usb_device_msc.c:225:21:USB_DeviceMscFreeHandle	16	static
+../usb/device/class/msc/usb_device_msc.c:243:21:USB_DeviceMscProcessUfiCommand	24	static
+../usb/device/class/msc/usb_device_msc.c:334:21:USB_DeviceMscBulkIn	72	static
+../usb/device/class/msc/usb_device_msc.c:458:21:USB_DeviceMscBulkOut	64	static
+../usb/device/class/msc/usb_device_msc.c:651:14:USB_DeviceMscEndpointsInit	56	static
+../usb/device/class/msc/usb_device_msc.c:751:14:USB_DeviceMscEndpointsDeinit	24	static
+../usb/device/class/msc/usb_device_msc.c:781:14:USB_DeviceMscInit	40	static
+../usb/device/class/msc/usb_device_msc.c:841:14:USB_DeviceMscDeinit	24	static
+../usb/device/class/msc/usb_device_msc.c:871:14:USB_DeviceMscEvent	112	static
+../usb/device/class/msc/usb_device_msc.c:1165:14:USB_DeviceMscSend	40	static
+../usb/device/class/msc/usb_device_msc.c:1223:14:USB_DeviceMscRecv	40	static
+../usb/device/class/msc/usb_device_msc.c:1276:14:USB_DeviceMscLbaTransfer	32	static

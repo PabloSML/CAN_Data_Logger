@@ -1,0 +1,16 @@
+F:\Pablo\Documents\MCUXpressoIDE_11.4.1_6260\workspace\frdmk64f_dev_msc_disk_freertos\CMSIS/core_cm4.h:1679:22:__NVIC_EnableIRQ	16	static
+F:\Pablo\Documents\MCUXpressoIDE_11.4.1_6260\workspace\frdmk64f_dev_msc_disk_freertos\CMSIS/core_cm4.h:1809:22:__NVIC_SetPriority	16	static
+F:\Pablo\Documents\MCUXpressoIDE_11.4.1_6260\workspace\frdmk64f_dev_msc_disk_freertos\drivers/fsl_common_arm.h:488:24:EnableIRQ	24	static
+F:\Pablo\Documents\MCUXpressoIDE_11.4.1_6260\workspace\frdmk64f_dev_msc_disk_freertos\drivers/fsl_sysmpu.h:268:20:SYSMPU_Enable	16	static
+../source/disk.c:105:6:USB0_IRQHandler	8	static
+../source/disk.c:112:6:USB_DeviceClockInit	8	static
+../source/disk.c:117:6:USB_DeviceIsrEnable	16	static
+../source/disk.c:129:6:USB_DeviceTaskFn	16	static
+../source/disk.c:134:6:USB_DeviceMscApp	4	static
+../source/disk.c:180:14:USB_DeviceMscCallback	48	static
+../source/disk.c:323:14:USB_DeviceCallback	40	static
+../source/disk.c:443:6:USB_DeviceMscAppTask	8	static
+../source/disk.c:458:6:USB_DeviceApplicationInit	8	static
+../source/disk.c:504:6:USB_DeviceTask	16	static
+../source/disk.c:513:6:APP_task	24	static
+../source/disk.c:552:5:main	16	static

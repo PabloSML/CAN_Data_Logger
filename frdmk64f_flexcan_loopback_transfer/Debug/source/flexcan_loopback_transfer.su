@@ -1,0 +1,2 @@
+../source/flexcan_loopback_transfer.c:52:8:flexcan_callback	24	static
+../source/flexcan_loopback_transfer.c:80:5:main	56	static

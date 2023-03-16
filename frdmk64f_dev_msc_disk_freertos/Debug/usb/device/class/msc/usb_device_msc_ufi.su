@@ -1,0 +1,16 @@
+../usb/device/class/msc/usb_device_msc_ufi.c:45:14:USB_DeviceMscUfiThirteenCasesCheck	32	static
+../usb/device/class/msc/usb_device_msc_ufi.c:320:14:USB_DeviceMscUfiRequestSenseCommand	48	static
+../usb/device/class/msc/usb_device_msc_ufi.c:356:14:USB_DeviceMscUfiInquiryCommand	48	static
+../usb/device/class/msc/usb_device_msc_ufi.c:394:14:USB_DeviceMscUfiReadCommand	32	static
+../usb/device/class/msc/usb_device_msc_ufi.c:447:14:USB_DeviceMscUfiWriteCommand	32	static
+../usb/device/class/msc/usb_device_msc_ufi.c:499:14:USB_DeviceMscUfiTestUnitReadyCommand	48	static
+../usb/device/class/msc/usb_device_msc_ufi.c:535:14:USB_DeviceMscUfiVerifyCommand	24	static
+../usb/device/class/msc/usb_device_msc_ufi.c:560:14:USB_DeviceMscUfiModeSenseCommand	48	static
+../usb/device/class/msc/usb_device_msc_ufi.c:599:14:USB_DeviceMscUfiModeSelectCommand	48	static
+../usb/device/class/msc/usb_device_msc_ufi.c:645:14:USB_DeviceMscUfiReadCapacityCommand	48	static
+../usb/device/class/msc/usb_device_msc_ufi.c:717:14:USB_DeviceMscUfiReadFormatCapacityCommand	72	static
+../usb/device/class/msc/usb_device_msc_ufi.c:834:14:USB_DeviceMscUfiFormatUnitCommand	24	static
+../usb/device/class/msc/usb_device_msc_ufi.c:873:14:USB_DeviceMscUfiPreventAllowMediumCommand	48	static
+../usb/device/class/msc/usb_device_msc_ufi.c:911:14:USB_DeviceMscUfiSendDiagnosticCommand	48	static
+../usb/device/class/msc/usb_device_msc_ufi.c:947:14:USB_DeviceMscUfiStartStopUnitCommand	48	static
+../usb/device/class/msc/usb_device_msc_ufi.c:988:14:USB_DeviceMscUfiUnsupportCommand	24	static
