@@ -1,1 +1,7 @@
 .settings
+/.metadata/
+/FreeRTOS_TAD_logs
+.mcuxpressoide_packages_support
+AzureRTOS_TAD_logs
+Debug
+*.launch

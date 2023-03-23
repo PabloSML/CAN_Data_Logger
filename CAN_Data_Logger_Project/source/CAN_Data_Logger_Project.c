@@ -40,7 +40,7 @@
 #include "MK64F12.h"
 #include "fsl_debug_console.h"
 /* TODO: insert other include files here. */
-
+#include "fsl_gpio.h"
 /* TODO: insert other definitions and declarations here. */
 
 /*
@@ -57,7 +57,14 @@ int main(void) {
     BOARD_InitDebugConsole();
 #endif
 
-    PRINTF("Hello World\n");
+    PRINTF("CAN EXISTS.\n");
+
+    gpio_pin_config_t green_led_config = {
+        kGPIO_DigitalOutput,
+        0,
+    };
+    GPIO_PinInit(GPIOE, 26, &green_led_config);
+    GPIO_PinWrite(GPIOE, 26, 1);
 
     /* Force the counter to be placed into memory. */
     volatile static int i = 0 ;
