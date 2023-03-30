@@ -10,7 +10,7 @@
 /*---------------------------------------------------------------------------/
 / MSDK adaptation configuration
 /---------------------------------------------------------------------------*/
-#define USB_DISK_ENABLE
+#define SD_DISK_ENABLE
 /* Available options are:
 /      RAM_DISK_ENABLE
 /      USB_DISK_ENABLE

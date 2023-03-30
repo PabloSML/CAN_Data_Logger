@@ -5,3 +5,4 @@
 AzureRTOS_TAD_logs
 Debug
 *.launch
+.vscode/
