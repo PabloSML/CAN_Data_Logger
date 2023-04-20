@@ -59,9 +59,9 @@
 
 #define DEMO_TASK_GET_SEM_BLOCK_TICKS 1U
 #define DEMO_TASK_ACCESS_SDCARD_TIMES 10U
-#define ACCESSFILE_TASK_STACK_SIZE (1024U)
+#define ACCESSFILE_TASK_STACK_SIZE (512U)
 #define ACCESSFILE_TASK_PRIORITY (configMAX_PRIORITIES - 2U)
-#define CARDDETECT_TASK_STACK_SIZE (1024U)
+#define CARDDETECT_TASK_STACK_SIZE (512U)
 #define CARDDETECT_TASK_PRIORITY (configMAX_PRIORITIES - 1U)
 
 
@@ -97,7 +97,7 @@ int main(void) {
     /* Init board hardware. */
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
-    BOARD_InitBootPeripherals();
+    //BOARD_InitBootPeripherals();
 #ifndef BOARD_INIT_DEBUG_CONSOLE_PERIPHERAL
     /* Init FSL debug console. */
     BOARD_InitDebugConsole();
@@ -142,8 +142,8 @@ int main(void) {
     /* Set a start date time and start RT */
     rtc_datetime_t date;
     date.year   = 2023U;
-    date.month  = 3U;
-    date.day    = 30U;
+    date.month  = 4U;
+    date.day    = 13U;
     date.hour   = 0U;
     date.minute = 0;
     date.second = 0;
@@ -160,17 +160,17 @@ int main(void) {
     /* Start the RTC time counter */
     RTC_StartTimer(RTC);
 
-    /* Demo de RTOS */
-    xTaskCreate(APP_task,                       /* pointer to the task */
-                (char const *)"app task",       /* task name for kernel awareness debugging */
-                512L / sizeof(portSTACK_TYPE), /* task stack size */
-                NULL,                           /* optional task startup argument */
-                3,                              /* initial priority */
-                &test_task_handle               /* optional task handle to create */
-                );
+    // /* Demo de RTOS */
+    // xTaskCreate(APP_task,                       /* pointer to the task */
+    //             (char const *)"app task",       /* task name for kernel awareness debugging */
+    //             512L / sizeof(portSTACK_TYPE), /* task stack size */
+    //             NULL,                           /* optional task startup argument */
+    //             3,                              /* initial priority */
+    //             &test_task_handle               /* optional task handle to create */
+    //             );
 
-    // xTaskCreate(FileAccessTask, "FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
-    xTaskCreate(CardDetectTask, "CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
+    xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
+    xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
                 
     vTaskStartScheduler();
 
@@ -226,7 +226,7 @@ static void FileAccessTask(void *pvParameters)
 
     while (1)
     {
-        error = f_open(&g_fileObject1, _T("/dir_1/magic.txt"), FA_WRITE);
+        error = f_open(&g_fileObject1, _T("/dir_1/magic.csv"), FA_WRITE);
         if (error)
         {
             if (error == FR_EXIST)
@@ -236,7 +236,7 @@ static void FileAccessTask(void *pvParameters)
             /* if file not exist, creat a new file */
             else if (error == FR_NO_FILE)
             {
-                if (f_open(&g_fileObject1, _T("/dir_1/magic.txt"), (FA_WRITE | FA_CREATE_NEW)) != FR_OK)
+                if (f_open(&g_fileObject1, _T("/dir_1/magic.csv"), (FA_WRITE | FA_CREATE_NEW)) != FR_OK)
                 {
                     PRINTF("Create file failed.\r\n");
                     break;
@@ -254,15 +254,27 @@ static void FileAccessTask(void *pvParameters)
             PRINTF("lseek file failed.\r\n");
             break;
         }
+        
+        char s_buffer0[] = "Year,Month,Day,Hour,Minute,Second\r\n";
+        if(writeTimes == 1)
+        {
+            error = f_write(&g_fileObject1, s_buffer0, sizeof(s_buffer0), &bytesWritten);
+            if ((error) || (bytesWritten != sizeof(s_buffer0)))
+            {
+                PRINTF("Write file failed.\r\n");
+                break;
+            }
+        }
 
         /* Get date time */
         RTC_GetDatetime(RTC, &date);
         char s_buffer1[100];
-        sprintf(s_buffer1, "Current datetime: %04hd-%02hd-%02hd %02hd:%02hd:%02hd\0", date.year, date.month, date.day, date.hour, date.minute, date.second);
+        sprintf(s_buffer1, "%04hd,%02hd,%02hd,%02hd,%02hd,%02hd\r\n", date.year, date.month, date.day, date.hour, date.minute, date.second);
         int len = strlen(s_buffer1);
+        int size = sizeof(char)*len;
 
-        error = f_write(&g_fileObject1, s_buffer1, sizeof(s_buffer1[0])*len, &bytesWritten);
-        if ((error) || (bytesWritten != sizeof(s_buffer1)))
+        error = f_write(&g_fileObject1, s_buffer1, size, &bytesWritten);
+        if ((error) || (bytesWritten != size))
         {
             PRINTF("Write file failed.\r\n");
             break;
@@ -277,7 +289,7 @@ static void FileAccessTask(void *pvParameters)
             continue;
         }
         {
-            PRINTF("TASK: write file successed.\r\n");
+            PRINTF("TASK: write file succeded.\r\n");
         }
 
         vTaskDelay(1000);
@@ -387,6 +399,10 @@ static status_t DEMO_MakeFileSystem(void)
             PRINTF("Make directory failed.\r\n");
             return kStatus_Fail;
         }
+    }
+    else
+    {
+        PRINTF("\r\nDirectory created.\r\n");
     }
 
     return kStatus_Success;
