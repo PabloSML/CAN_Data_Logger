@@ -56,6 +56,8 @@
 #include "sdmmc_config.h"
 #include "fsl_sysmpu.h"
 
+#include "flexcan_rtos.h"
+
 
 #define DEMO_TASK_GET_SEM_BLOCK_TICKS 1U
 #define DEMO_TASK_ACCESS_SDCARD_TIMES 10U
@@ -63,7 +65,7 @@
 #define ACCESSFILE_TASK_PRIORITY (configMAX_PRIORITIES - 2U)
 #define CARDDETECT_TASK_STACK_SIZE (512U)
 #define CARDDETECT_TASK_PRIORITY (configMAX_PRIORITIES - 1U)
-
+#define FLEXCAN_TASK_PRIORITY (configMAX_PRIORITIES - 2U)
 
 // Variables
 static FATFS g_fileSystem; /* File system object */
@@ -142,8 +144,8 @@ int main(void) {
     /* Set a start date time and start RT */
     rtc_datetime_t date;
     date.year   = 2023U;
-    date.month  = 4U;
-    date.day    = 13U;
+    date.month  = 5U;
+    date.day    = 4U;
     date.hour   = 0U;
     date.minute = 0;
     date.second = 0;
@@ -169,8 +171,9 @@ int main(void) {
     //             &test_task_handle               /* optional task handle to create */
     //             );
 
-    xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
-    xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
+    //xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
+    //xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
+    xTaskCreate(FlexCanTask,    (char const *)"FlexCanTask",    FLEXCAN_TASK_STACK_SIZE,    NULL, FLEXCAN_TASK_PRIORITY,    NULL);
                 
     vTaskStartScheduler();
 
@@ -226,6 +229,12 @@ static void FileAccessTask(void *pvParameters)
 
     while (1)
     {
+
+        if (xSemaphoreTake(s_CanMsgSemaphore, portMAX_DELAY) == pdTRUE){
+
+            PRINTF("Hola, recibí un mensaje de CAN!\r\n");
+        }
+
         error = f_open(&g_fileObject1, _T("/dir_1/magic.csv"), FA_WRITE);
         if (error)
         {
@@ -292,7 +301,7 @@ static void FileAccessTask(void *pvParameters)
             PRINTF("TASK: write file succeded.\r\n");
         }
 
-        vTaskDelay(1000);
+        //vTaskDelay(1000);
     }
 
     vTaskSuspend(NULL);
