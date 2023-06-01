@@ -170,11 +170,13 @@ int main(void) {
     //             3,                              /* initial priority */
     //             &test_task_handle               /* optional task handle to create */
     //             );
+    Init_FlexCAN();
 
     //xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
     //xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
     xTaskCreate(FlexCanTask,    (char const *)"FlexCanTask",    FLEXCAN_TASK_STACK_SIZE,    NULL, FLEXCAN_TASK_PRIORITY,    NULL);
-                
+
+
     vTaskStartScheduler();
 
     /* Force the counter to be placed into memory. */

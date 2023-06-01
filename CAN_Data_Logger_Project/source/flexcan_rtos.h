@@ -36,11 +36,11 @@ static SemaphoreHandle_t s_CanMsgSemaphore = NULL;
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
+void Init_FlexCAN(void);
 /**
  * @brief Task that handles the FlexCan module and transfers data to the SD card task
  */
 void FlexCanTask(void *pvParameters);
-
 /*******************************************************************************
  ******************************************************************************/
 

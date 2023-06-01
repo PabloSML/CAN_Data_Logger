@@ -55,6 +55,8 @@ static SemaphoreHandle_t s_FlexCanSemaphore = NULL;
  */
 static FLEXCAN_CALLBACK(flexcan_callback)
 {
+    // BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    
     switch (status)
     {
         /* Process FlexCAN Rx event. */
@@ -77,7 +79,9 @@ static FLEXCAN_CALLBACK(flexcan_callback)
             break;
     }
     
-    xSemaphoreGiveFromISR(s_FlexCanSemaphore, NULL);
+    // xSemaphoreGiveFromISR(s_FlexCanSemaphore, &xHigherPriorityTaskWoken);
+
+    // portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 /*!
@@ -162,6 +166,9 @@ void Init_FlexCAN(void)
 
     /* Create FlexCAN handle structure and set call back function. */
     FLEXCAN_TransferCreateHandle(EXAMPLE_CAN, &flexcanHandle, flexcan_callback, NULL);
+
+    ///////////////////////////////////////
+    
 }
 
 
@@ -170,7 +177,7 @@ void FlexCanTask(void *pvParameters)
     s_FlexCanSemaphore = xSemaphoreCreateBinary();
     s_CanMsgSemaphore = xSemaphoreCreateBinary();
 
-    Init_FlexCAN();
+    
 
     while (1)
     {
@@ -183,7 +190,7 @@ void FlexCanTask(void *pvParameters)
         rxXfer.frame = &rxFrame;
         (void)FLEXCAN_TransferReceiveNonBlocking(EXAMPLE_CAN, &flexcanHandle, &rxXfer);
     #endif
-
+     
         /* Prepare Tx Frame for sending. */
         txFrame.format = (uint8_t)kFLEXCAN_FrameFormatStandard;
         txFrame.type   = (uint8_t)kFLEXCAN_FrameTypeData;
@@ -229,6 +236,9 @@ void FlexCanTask(void *pvParameters)
         /* Waiting for Rx Message finish. */
         //if (xSemaphoreTake(s_FlexCanSemaphore, portMAX_DELAY) == pdTRUE){
 
+
+        // while(!txComplete){}
+        // LOG_INFO("Good news, tx complete\r\n");
         
         /* Waiting for Rx Message finish. */
         while ((!rxComplete) || (!txComplete))
