@@ -187,7 +187,7 @@ void FlexCanTask(void *pvParameters)
 
     while (1)
     {
-        // vTaskDelay(1000);
+        vTaskDelay(1000);   // Delete this delay to test faster CAN transfers.
         /* Start receive data through Rx Message Buffer. */
         rxXfer.mbIdx = (uint8_t)RX_MESSAGE_BUFFER_NUM;
     #if (defined(USE_CANFD) && USE_CANFD)
