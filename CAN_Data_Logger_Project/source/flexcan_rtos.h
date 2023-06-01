@@ -4,8 +4,8 @@
   @author   Grupo CAN Data Logger
  ******************************************************************************/
 
-#ifndef _TEMPLATE_H_
-#define _TEMPLATE_H_
+#ifndef _FLEXCAN_RTOS_H_
+#define _FLEXCAN_RTOS_H_
 
 /*******************************************************************************
  * INCLUDE HEADER FILES
@@ -30,7 +30,6 @@
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
-static SemaphoreHandle_t s_CanMsgSemaphore = NULL;
 
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
@@ -41,7 +40,9 @@ void Init_FlexCAN(void);
  * @brief Task that handles the FlexCan module and transfers data to the SD card task
  */
 void FlexCanTask(void *pvParameters);
+
+SemaphoreHandle_t getCanMsgSemaphore(void);
 /*******************************************************************************
  ******************************************************************************/
 
-#endif // _TEMPLATE_H_
+#endif // _FLEXCAN_RTOS_H_

@@ -46,6 +46,7 @@ flexcan_frame_t txFrame, rxFrame;
 
 
 static SemaphoreHandle_t s_FlexCanSemaphore = NULL;
+static SemaphoreHandle_t s_CanMsgSemaphore = NULL;
 
 /*******************************************************************************
  * Code
@@ -63,6 +64,7 @@ static FLEXCAN_CALLBACK(flexcan_callback)
         case kStatus_FLEXCAN_RxIdle:
             if (RX_MESSAGE_BUFFER_NUM == result)
             {
+                bool success = xSemaphoreGiveFromISR(s_FlexCanSemaphore, NULL);
                 rxComplete = true;
             }
             break;
@@ -163,24 +165,29 @@ void Init_FlexCAN(void)
 #else
     FLEXCAN_SetTxMbConfig(EXAMPLE_CAN, TX_MESSAGE_BUFFER_NUM, true);
 #endif
+    
+    /* set IRQ priority */
+    NVIC_SetPriority(CAN0_ORed_Message_buffer_IRQn, 5);
+    NVIC_SetPriority(CAN0_Bus_Off_IRQn, 5);
+    NVIC_SetPriority(CAN0_Error_IRQn, 5);
+    NVIC_SetPriority(CAN0_Tx_Warning_IRQn, 5);
+    NVIC_SetPriority(CAN0_Rx_Warning_IRQn, 5);
+    NVIC_SetPriority(CAN0_Wake_Up_IRQn, 5);
 
     /* Create FlexCAN handle structure and set call back function. */
     FLEXCAN_TransferCreateHandle(EXAMPLE_CAN, &flexcanHandle, flexcan_callback, NULL);
-
-    ///////////////////////////////////////
     
+    s_FlexCanSemaphore = xSemaphoreCreateBinary();
+    s_CanMsgSemaphore = xSemaphoreCreateBinary();
 }
 
 
 void FlexCanTask(void *pvParameters)
 {
-    s_FlexCanSemaphore = xSemaphoreCreateBinary();
-    s_CanMsgSemaphore = xSemaphoreCreateBinary();
-
-    
 
     while (1)
     {
+        // vTaskDelay(1000);
         /* Start receive data through Rx Message Buffer. */
         rxXfer.mbIdx = (uint8_t)RX_MESSAGE_BUFFER_NUM;
     #if (defined(USE_CANFD) && USE_CANFD)
@@ -212,15 +219,15 @@ void FlexCanTask(void *pvParameters)
                             CAN_WORD1_DATA_BYTE_7(0x88);
     #endif
 
-        LOG_INFO("Send message from MB%d to MB%d\r\n", TX_MESSAGE_BUFFER_NUM, RX_MESSAGE_BUFFER_NUM);
+        // LOG_INFO("Send message from MB%d to MB%d\r\n", TX_MESSAGE_BUFFER_NUM, RX_MESSAGE_BUFFER_NUM);
     #if (defined(USE_CANFD) && USE_CANFD)
         for (i = 0; i < DWORD_IN_MB; i++)
         {
             LOG_INFO("tx word%d = 0x%x\r\n", i, txFrame.dataWord[i]);
         }
     #else
-        LOG_INFO("tx word0 = 0x%x\r\n", txFrame.dataWord0);
-        LOG_INFO("tx word1 = 0x%x\r\n", txFrame.dataWord1);
+        // LOG_INFO("tx word0 = 0x%x\r\n", txFrame.dataWord0);
+        // LOG_INFO("tx word1 = 0x%x\r\n", txFrame.dataWord1);
     #endif
 
         /* Send data through Tx Message Buffer. */
@@ -234,33 +241,38 @@ void FlexCanTask(void *pvParameters)
     #endif
 
         /* Waiting for Rx Message finish. */
-        //if (xSemaphoreTake(s_FlexCanSemaphore, portMAX_DELAY) == pdTRUE){
+        if (xSemaphoreTake(s_FlexCanSemaphore, portMAX_DELAY) == pdTRUE){
 
 
         // while(!txComplete){}
         // LOG_INFO("Good news, tx complete\r\n");
         
         /* Waiting for Rx Message finish. */
-        while ((!rxComplete) || (!txComplete))
-        {
-        };
+        // while ((!rxComplete) || (!txComplete))
+        // {
+        // };
 
             xSemaphoreGive(s_CanMsgSemaphore);
 
-            LOG_INFO("\r\nReceived message from MB%d\r\n", RX_MESSAGE_BUFFER_NUM);
+            // LOG_INFO("\r\nReceived message from MB%d\r\n", RX_MESSAGE_BUFFER_NUM);
         #if (defined(USE_CANFD) && USE_CANFD)
             for (i = 0; i < DWORD_IN_MB; i++)
             {
                 LOG_INFO("rx word%d = 0x%x\r\n", i, rxFrame.dataWord[i]);
             }
         #else
-            LOG_INFO("rx word0 = 0x%x\r\n", rxFrame.dataWord0);
-            LOG_INFO("rx word1 = 0x%x\r\n", rxFrame.dataWord1);
+            // LOG_INFO("rx word0 = 0x%x\r\n", rxFrame.dataWord0);
+            // LOG_INFO("rx word1 = 0x%x\r\n", rxFrame.dataWord1);
         #endif
 
             //LOG_INFO("\r\n==FlexCAN loopback example -- Finish.==\r\n");
-        //}
+        }
     }
 
     vTaskSuspend(NULL);
+}
+
+
+SemaphoreHandle_t getCanMsgSemaphore(void){
+    return s_CanMsgSemaphore;
 }
