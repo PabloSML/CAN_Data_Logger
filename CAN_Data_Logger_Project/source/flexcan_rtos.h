@@ -14,6 +14,7 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "task.h"
+#include "queue.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -25,6 +26,20 @@
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
 
+// Struct containing the data of a CAN message
+/*
+  Fields:
+    id: CAN message ID
+    timestamp: CAN message timestamp
+    data: CAN message data
+    length: CAN message length
+*/
+typedef struct {
+  uint32_t id;
+  uint32_t timestamp;
+  uint32_t data[8];
+  uint8_t length;
+} can_msg_t;
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -36,6 +51,12 @@
  ******************************************************************************/
 
 void Init_FlexCAN(void);
+
+/*
+* @brief Function that returns the queue used to store the CAN messages
+*/
+QueueHandle_t getCanMsgQueue(void);
+
 /**
  * @brief Task that handles the FlexCan module and transfers data to the SD card task
  */

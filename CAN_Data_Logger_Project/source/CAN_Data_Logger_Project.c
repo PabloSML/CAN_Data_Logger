@@ -82,8 +82,6 @@ static SemaphoreHandle_t s_CardDetectSemaphore = NULL;
 TaskHandle_t test_task_handle;
 TaskHandle_t fileAccessTaskHandle;
 
-
-
 static void APP_task(void *pvParameters);
 static void SDCARD_DetectCallBack(bool isInserted, void *userData);
 static void CardDetectTask(void *pvParameters);
@@ -230,15 +228,28 @@ static void FileAccessTask(void *pvParameters)
     xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
 
     SemaphoreHandle_t s_CanMsgSemaphore = getCanMsgSemaphore();
+    QueueHandle_t canMsgQueue = getCanMsgQueue();
+    can_msg_t canMsg;
 
     while (1)
     {
 
         // vTaskDelay(1000);
         if (xSemaphoreTake(s_CanMsgSemaphore, portMAX_DELAY) == pdTRUE){
-            PRINTF("Hola, recibí un mensaje de CAN!\r\n");
+            PRINTF("\r\nHola, recibí un mensaje de CAN!\r\n");
 
-
+            if (xQueueReceive(canMsgQueue, &canMsg, portMAX_DELAY) == pdTRUE)
+            {
+                PRINTF("ID = 0x%x\r\n", canMsg.id);
+                PRINTF("Timestamp = 0x%x\r\n", canMsg.timestamp);
+                PRINTF("Length = %d\r\n", canMsg.length);
+                PRINTF("Data word 0 = 0x%x\r\n", canMsg.data[0]);
+                PRINTF("Data word 1 = 0x%x\r\n", canMsg.data[1]);
+            }
+            else
+            {
+                PRINTF("No pude encontrar los datos en la queue :(\r\n");
+            }
 
             error = f_open(&g_fileObject1, _T("/dir_1/magic.csv"), FA_WRITE);
             if (error)

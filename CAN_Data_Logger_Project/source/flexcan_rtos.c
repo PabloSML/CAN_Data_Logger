@@ -25,6 +25,9 @@
 #define TX_MESSAGE_BUFFER_NUM      (8)
 #define DLC                        (8)
 
+#define CAN_QUEUE_LENGTH 10
+#define CAN_QUEUE_ITEM_SIZE sizeof(can_msg_t)
+
 /* Fix MISRA_C-2012 Rule 17.7. */
 #define LOG_INFO (void)PRINTF
 /*******************************************************************************
@@ -44,6 +47,9 @@ flexcan_fd_frame_t txFrame, rxFrame;
 flexcan_frame_t txFrame, rxFrame;
 #endif
 
+static StaticQueue_t s_CanQueue;
+static uint8_t s_CanQueueStorage[CAN_QUEUE_LENGTH * CAN_QUEUE_ITEM_SIZE];
+static QueueHandle_t s_CanQueueHandle = NULL;
 
 static SemaphoreHandle_t s_FlexCanSemaphore = NULL;
 static SemaphoreHandle_t s_CanMsgSemaphore = NULL;
@@ -179,11 +185,17 @@ void Init_FlexCAN(void)
     
     s_FlexCanSemaphore = xSemaphoreCreateBinary();
     s_CanMsgSemaphore = xSemaphoreCreateBinary();
+
+    s_CanQueueHandle = xQueueCreateStatic(CAN_QUEUE_LENGTH, CAN_QUEUE_ITEM_SIZE, s_CanQueueStorage, &s_CanQueue);
 }
 
+QueueHandle_t getCanMsgQueue(void){
+    return s_CanQueueHandle;
+}
 
 void FlexCanTask(void *pvParameters)
 {
+    can_msg_t can_msg;
 
     while (1)
     {
@@ -251,6 +263,16 @@ void FlexCanTask(void *pvParameters)
         // while ((!rxComplete) || (!txComplete))
         // {
         // };
+
+            // Create a CAN message struct with the received data
+            can_msg.id = 0x12345678;
+            can_msg.timestamp = 0xABCDEFAB;
+            can_msg.length = rxFrame.length;
+            can_msg.data[0] = rxFrame.dataWord0;
+            can_msg.data[1] = rxFrame.dataWord1;
+
+            // Send the CAN message struct to the CAN message queue
+            xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
 
             xSemaphoreGive(s_CanMsgSemaphore);
 
