@@ -265,16 +265,22 @@ void FlexCanTask(void *pvParameters)
         // };
 
             // Create a CAN message struct with the received data
-            can_msg.id = 0x12345678;
-            can_msg.timestamp = 0xABCDEFAB;
+            can_msg.timestamp = rxFrame.timestamp;
+            can_msg.id = rxFrame.id;
             can_msg.length = rxFrame.length;
-            can_msg.data[0] = rxFrame.dataWord0;
-            can_msg.data[1] = rxFrame.dataWord1;
+            can_msg.data[0] = rxFrame.dataByte0;
+            can_msg.data[1] = rxFrame.dataByte1;
+            can_msg.data[2] = rxFrame.dataByte2;
+            can_msg.data[3] = rxFrame.dataByte3;
+            can_msg.data[4] = rxFrame.dataByte4;
+            can_msg.data[5] = rxFrame.dataByte5;
+            can_msg.data[6] = rxFrame.dataByte6;
+            can_msg.data[7] = rxFrame.dataByte7;
 
             // Send the CAN message struct to the CAN message queue
             xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
 
-            xSemaphoreGive(s_CanMsgSemaphore);
+            // xSemaphoreGive(s_CanMsgSemaphore);
 
             // LOG_INFO("\r\nReceived message from MB%d\r\n", RX_MESSAGE_BUFFER_NUM);
         #if (defined(USE_CANFD) && USE_CANFD)

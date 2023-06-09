@@ -33,12 +33,14 @@
     timestamp: CAN message timestamp
     data: CAN message data
     length: CAN message length
+    ack: CAN message ACK
 */
 typedef struct {
-  uint32_t id;
   uint32_t timestamp;
-  uint32_t data[8];
+  uint32_t id;
   uint8_t length;
+  uint8_t data[8];
+//  bool ack;
 } can_msg_t;
 
 /*******************************************************************************

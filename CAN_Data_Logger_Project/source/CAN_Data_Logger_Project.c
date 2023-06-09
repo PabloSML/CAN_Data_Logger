@@ -235,89 +235,93 @@ static void FileAccessTask(void *pvParameters)
     {
 
         // vTaskDelay(1000);
-        if (xSemaphoreTake(s_CanMsgSemaphore, portMAX_DELAY) == pdTRUE){
-            PRINTF("\r\nHola, recibí un mensaje de CAN!\r\n");
+        // if (xSemaphoreTake(s_CanMsgSemaphore, portMAX_DELAY) == pdTRUE){
 
-            if (xQueueReceive(canMsgQueue, &canMsg, portMAX_DELAY) == pdTRUE)
+        if (xQueueReceive(canMsgQueue, &canMsg, portMAX_DELAY) == pdTRUE)   // Suspende la tarea hasta que haya un mensaje en la cola
+        {
+            PRINTF("\r\nHola, recibí un mensaje de CAN!\r\n");
+            PRINTF("Timestamp = %d\r\n", canMsg.timestamp);
+            PRINTF("ID = 0x%x\r\n", canMsg.id);
+            PRINTF("Length = %d\r\n", canMsg.length);
+            PRINTF("Data = ");
+            for (uint8_t i = 0; i < canMsg.length; i++)
             {
-                PRINTF("ID = 0x%x\r\n", canMsg.id);
-                PRINTF("Timestamp = 0x%x\r\n", canMsg.timestamp);
-                PRINTF("Length = %d\r\n", canMsg.length);
-                PRINTF("Data word 0 = 0x%x\r\n", canMsg.data[0]);
-                PRINTF("Data word 1 = 0x%x\r\n", canMsg.data[1]);
+                PRINTF("0x%x ", canMsg.data[i]);
+            }
+        }
+        else
+        {
+            PRINTF("No pude encontrar los datos en la queue :(\r\n");
+        }
+
+        error = f_open(&g_fileObject1, _T("/dir_1/magic.csv"), FA_WRITE);
+        if (error)
+        {
+            if (error == FR_EXIST)
+            {
+                PRINTF("File exists.\r\n");
+            }
+            /* if file not exist, creat a new file */
+            else if (error == FR_NO_FILE)
+            {
+                if (f_open(&g_fileObject1, _T("/dir_1/magic.csv"), (FA_WRITE | FA_CREATE_NEW)) != FR_OK)
+                {
+                    PRINTF("Create file failed.\r\n");
+                    break;
+                }
             }
             else
             {
-                PRINTF("No pude encontrar los datos en la queue :(\r\n");
-            }
-
-            error = f_open(&g_fileObject1, _T("/dir_1/magic.csv"), FA_WRITE);
-            if (error)
-            {
-                if (error == FR_EXIST)
-                {
-                    PRINTF("File exists.\r\n");
-                }
-                /* if file not exist, creat a new file */
-                else if (error == FR_NO_FILE)
-                {
-                    if (f_open(&g_fileObject1, _T("/dir_1/magic.csv"), (FA_WRITE | FA_CREATE_NEW)) != FR_OK)
-                    {
-                        PRINTF("Create file failed.\r\n");
-                        break;
-                    }
-                }
-                else
-                {
-                    PRINTF("Open file failed.\r\n");
-                    break;
-                }
-            }
-            /* write append */
-            if (f_lseek(&g_fileObject1, g_fileObject1.obj.objsize) != FR_OK)
-            {
-                PRINTF("lseek file failed.\r\n");
+                PRINTF("Open file failed.\r\n");
                 break;
             }
-            
-            char s_buffer0[] = "Year,Month,Day,Hour,Minute,Second\r\n";
-            if(writeTimes == 1)
-            {
-                error = f_write(&g_fileObject1, s_buffer0, sizeof(s_buffer0), &bytesWritten);
-                if ((error) || (bytesWritten != sizeof(s_buffer0)))
-                {
-                    PRINTF("Write file failed.\r\n");
-                    break;
-                }
-            }
-
-            /* Get date time */
-            RTC_GetDatetime(RTC, &date);
-            char s_buffer1[100];
-            sprintf(s_buffer1, "%04hd,%02hd,%02hd,%02hd,%02hd,%02hd\r\n", date.year, date.month, date.day, date.hour, date.minute, date.second);
-            int len = strlen(s_buffer1);
-            int size = sizeof(char)*len;
-
-            error = f_write(&g_fileObject1, s_buffer1, size, &bytesWritten);
-            if ((error) || (bytesWritten != size))
+        }
+        /* write append */
+        if (f_lseek(&g_fileObject1, g_fileObject1.obj.objsize) != FR_OK)
+        {
+            PRINTF("lseek file failed.\r\n");
+            break;
+        }
+        
+        char s_buffer0[] = "Year,Month,Day,Hour,Minute,Second,CAN Timestamp,ID,Data Lenght,B0,B1,B2,B3,B4,B5,B6,B7\r\n";
+        if(writeTimes == 1)
+        {
+            error = f_write(&g_fileObject1, s_buffer0, sizeof(s_buffer0), &bytesWritten);
+            if ((error) || (bytesWritten != sizeof(s_buffer0)))
             {
                 PRINTF("Write file failed.\r\n");
                 break;
             }
-            f_close(&g_fileObject1);
-
-            if (++writeTimes > DEMO_TASK_ACCESS_SDCARD_TIMES)
-            {
-                PRINTF("TASK: finished.\r\n");
-                writeTimes = 1U;
-                xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
-                continue;
-            }
-            {
-                PRINTF("TASK: write file succeded.\r\n");
-            }
-
         }
+
+        /* Get date time */
+        RTC_GetDatetime(RTC, &date);
+        char s_buffer1[100];
+        sprintf(s_buffer1, "%04hd,%02hd,%02hd,%02hd,%02hd,%02hd,%d,%08x,%d,%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x\r\n", 
+        date.year, date.month, date.day, date.hour, date.minute, date.second, canMsg.timestamp, canMsg.id, canMsg.length, canMsg.data[0], canMsg.data[1], canMsg.data[2], canMsg.data[3], canMsg.data[4], canMsg.data[5], canMsg.data[6], canMsg.data[7]);
+        int len = strlen(s_buffer1);
+        int size = sizeof(char)*len;
+
+        error = f_write(&g_fileObject1, s_buffer1, size, &bytesWritten);
+        if ((error) || (bytesWritten != size))
+        {
+            PRINTF("Write file failed.\r\n");
+            break;
+        }
+        f_close(&g_fileObject1);
+
+        if (++writeTimes > DEMO_TASK_ACCESS_SDCARD_TIMES)
+        {
+            PRINTF("TASK: finished.\r\n");
+            writeTimes = 1U;
+            xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
+            continue;
+        }
+        {
+            PRINTF("TASK: write file succeded.\r\n");
+        }
+
+        // }
     }
 
     vTaskSuspend(NULL);
