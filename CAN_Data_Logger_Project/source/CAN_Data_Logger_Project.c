@@ -57,7 +57,7 @@
 #include "fsl_sysmpu.h"
 
 #include "flexcan_rtos.h"
-
+#include "drive_rtos.h"
 
 #define DEMO_TASK_GET_SEM_BLOCK_TICKS 1U
 #define DEMO_TASK_ACCESS_SDCARD_TIMES 10U
@@ -66,6 +66,14 @@
 #define CARDDETECT_TASK_STACK_SIZE (512U)
 #define CARDDETECT_TASK_PRIORITY (configMAX_PRIORITIES - 1U)
 #define FLEXCAN_TASK_PRIORITY (configMAX_PRIORITIES - 3U)
+#define DRIVE_TASK_PRIORITY (configMAX_PRIORITIES - 3U)
+
+// Modes of operation
+typedef enum
+{
+    LOGGER_MODE,
+    DRIVE_MODE
+} op_mode_t;
 
 // Variables
 static FATFS g_fileSystem; /* File system object */
@@ -103,76 +111,105 @@ int main(void) {
     BOARD_InitDebugConsole();
 #endif
 
+    op_mode_t op_mode;
 
-    /* Demo blinky blinky lights */
-    PRINTF("CAN EXISTS.\n");
-    gpio_pin_config_t green_led_config = {
-        kGPIO_DigitalOutput,
+    // gpio_pin_config_t green_led_config = {
+    //     kGPIO_DigitalOutput,
+    //     LOGIC_LED_OFF,
+    // };
+    // GPIO_PinInit(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, &green_led_config);
+
+    // Configure GPIO for reading SW3
+    gpio_pin_config_t sw_config = {
+        kGPIO_DigitalInput,
         0,
     };
-    GPIO_PinInit(GPIOE, 26, &green_led_config);
-    GPIO_PinWrite(GPIOE, 26, 1);
+    GPIO_PinInit(BOARD_SW3_GPIO, BOARD_SW3_GPIO_PIN, &sw_config);
+
+    PRINTF("CAN EXISTS.\n");
+
+    // /* Demo blinky blinky lights */
+    // GPIO_PinWrite(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, LOGIC_LED_ON);
+    // GPIO_PinWrite(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, LOGIC_LED_OFF);
+
+    if (GPIO_PinRead(BOARD_SW3_GPIO, BOARD_SW3_GPIO_PIN) == LOGIC_SW_PRESSED)
+    {
+        op_mode = DRIVE_MODE;
+    }
+    else                                                                      
+    {
+        op_mode = LOGGER_MODE;
+    }
 
     ////// Demo Tarjeta SD
     
     SYSMPU_Enable(SYSMPU, false);       //Que hace? No sé
 
-    Init_FlexCAN();
-
-
-    /* Init RTC */
-    /*
-     * rtcConfig.wakeupSelect = false;
-     * rtcConfig.updateMode = false;
-     * rtcConfig.supervisorAccess = false;
-     * rtcConfig.compensationInterval = 0;
-     * rtcConfig.compensationTime = 0;
-     */
-    rtc_config_t rtcConfig;
-    RTC_GetDefaultConfig(&rtcConfig);
-    RTC_Init(RTC, &rtcConfig);
-    /* If the oscillator has not been enabled. */
-    if (0U == (RTC->CR & RTC_CR_OSCE_MASK))
+    if (op_mode == LOGGER_MODE)
     {
-        /* Select RTC clock source */
-        RTC_SetClockSource(RTC);
+        Init_FlexCAN();
 
-        /* Wait for OSC clock steady. */
-        // Not defined yet
+        /* Init RTC */
+        /*
+        * rtcConfig.wakeupSelect = false;
+        * rtcConfig.updateMode = false;
+        * rtcConfig.supervisorAccess = false;
+        * rtcConfig.compensationInterval = 0;
+        * rtcConfig.compensationTime = 0;
+        */
+        rtc_config_t rtcConfig;
+        RTC_GetDefaultConfig(&rtcConfig);
+        RTC_Init(RTC, &rtcConfig);
+        /* If the oscillator has not been enabled. */
+        if (0U == (RTC->CR & RTC_CR_OSCE_MASK))
+        {
+            /* Select RTC clock source */
+            RTC_SetClockSource(RTC);
+
+            /* Wait for OSC clock steady. */
+            // Not defined yet
+        }
+        /* Set a start date time and start RT */
+        rtc_datetime_t date;
+        date.year   = 2023U;
+        date.month  = 5U;
+        date.day    = 4U;
+        date.hour   = 0U;
+        date.minute = 0;
+        date.second = 0;
+
+        /* RTC time counter has to be stopped before setting the date & time in the TSR register */
+        RTC_StopTimer(RTC);
+        /* Set RTC time to default */
+        RTC_SetDatetime(RTC, &date);
+        /* Enable RTC alarm interrupt */
+        //RTC_EnableInterrupts(RTC, kRTC_AlarmInterruptEnable);
+        /* Enable at the NVIC */
+        //EnableIRQ(RTC_IRQn);
+
+        /* Start the RTC time counter */
+        RTC_StartTimer(RTC);
+
+        // /* Demo de RTOS */
+        // xTaskCreate(APP_task,                       /* pointer to the task */
+        //             (char const *)"app task",       /* task name for kernel awareness debugging */
+        //             512L / sizeof(portSTACK_TYPE), /* task stack size */
+        //             NULL,                           /* optional task startup argument */
+        //             3,                              /* initial priority */
+        //             &test_task_handle               /* optional task handle to create */
+        //             );
+
+        xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
+        xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
+        xTaskCreate(FlexCanTask,    (char const *)"FlexCanTask",    FLEXCAN_TASK_STACK_SIZE,    NULL, FLEXCAN_TASK_PRIORITY,    NULL);
     }
-    /* Set a start date time and start RT */
-    rtc_datetime_t date;
-    date.year   = 2023U;
-    date.month  = 5U;
-    date.day    = 4U;
-    date.hour   = 0U;
-    date.minute = 0;
-    date.second = 0;
 
-    /* RTC time counter has to be stopped before setting the date & time in the TSR register */
-    RTC_StopTimer(RTC);
-    /* Set RTC time to default */
-    RTC_SetDatetime(RTC, &date);
-    /* Enable RTC alarm interrupt */
-    //RTC_EnableInterrupts(RTC, kRTC_AlarmInterruptEnable);
-    /* Enable at the NVIC */
-    //EnableIRQ(RTC_IRQn);
+    else if (op_mode == DRIVE_MODE)
+    {
+        Init_Drive();
 
-    /* Start the RTC time counter */
-    RTC_StartTimer(RTC);
-
-    // /* Demo de RTOS */
-    // xTaskCreate(APP_task,                       /* pointer to the task */
-    //             (char const *)"app task",       /* task name for kernel awareness debugging */
-    //             512L / sizeof(portSTACK_TYPE), /* task stack size */
-    //             NULL,                           /* optional task startup argument */
-    //             3,                              /* initial priority */
-    //             &test_task_handle               /* optional task handle to create */
-    //             );
-
-    xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
-    xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
-    xTaskCreate(FlexCanTask,    (char const *)"FlexCanTask",    FLEXCAN_TASK_STACK_SIZE,    NULL, FLEXCAN_TASK_PRIORITY,    NULL);
+        xTaskCreate(DriveTask, (char const *)"DriveTask", DRIVE_TASK_STACK_SIZE, NULL, DRIVE_TASK_PRIORITY, NULL);
+    }
 
 
     vTaskStartScheduler();

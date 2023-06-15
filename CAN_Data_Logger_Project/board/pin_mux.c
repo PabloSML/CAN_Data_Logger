@@ -162,7 +162,11 @@ void BOARD_InitPins(void)
     /* Port E Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortE);
 
-    PORT_SetPinMux(PORTE, 26U, kPORT_MuxAsGpio);
+    /* PORTE26 (Green LED) is configured as GPIO */
+    PORT_SetPinMux(BOARD_LED_GREEN_PORT, BOARD_LED_GREEN_PIN, kPORT_MuxAsGpio);
+
+    /* PORTA4 (Switch 3) is configured as GPIO */
+    PORT_SetPinMux(BOARD_SW3_PORT, BOARD_SW3_PIN, kPORT_MuxAsGpio);
 
     /* PORTA2 (pin 36) is configured as TRACE_SWO */
     PORT_SetPinMux(PORTA, 2U, kPORT_MuxAlt7);

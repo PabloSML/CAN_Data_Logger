@@ -38,6 +38,8 @@
 #define BOARD_ENET0_PHY_ADDRESS (0x00U) /* Phy address of enet port 0. */
 
 /* Define the port interrupt number for the board switches */
+#define LOGIC_SW_PRESSED 0U
+#define LOGIC_SW_RELEASED 1U
 #ifndef BOARD_SW2_GPIO
 #define BOARD_SW2_GPIO GPIOC
 #endif
