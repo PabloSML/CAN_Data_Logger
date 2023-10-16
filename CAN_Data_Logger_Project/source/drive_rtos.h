@@ -11,10 +11,14 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include "FreeRTOS.h"
-// #include "semphr.h"
-// #include "task.h"
-// #include "queue.h"
+#include "usb_device_config.h"
+#include "usb.h"
+#include "usb_device.h"
+
+#include "usb_device_class.h"
+#include "usb_device_msc.h"
+#include "usb_device_ch9.h"
+#include "usb_device_descriptor.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE

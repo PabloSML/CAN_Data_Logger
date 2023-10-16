@@ -47,8 +47,10 @@
 void BOARD_InitHardware(void);
 void USB_DeviceClockInit(void);
 void USB_DeviceIsrEnable(void);
+void USB_DeviceApplicationInit(void);
 #if USB_DEVICE_CONFIG_USE_TASK
 void USB_DeviceTaskFn(void *deviceHandle);
+void USB_DeviceTask(void *handle);
 #endif
 
 /*******************************************************************************
@@ -75,7 +77,7 @@ usb_device_mode_parameters_header_struct_t g_ModeParametersHeader = {
     {0x00, 0x00, 0x00, 0x00} /*!<This bit should be set to zero*/
 };
 /* Data structure of msc device, store the information ,such as class handle */
-usb_msc_struct_t g_msc;
+extern usb_msc_struct_t g_msc;
 
 USB_DMA_NONINIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE) uint32_t g_mscReadRequestBuffer[USB_DEVICE_MSC_READ_BUFF_SIZE >> 2];
 #if (defined(USB_DEVICE_MSC_USE_WRITE_TASK) && (USB_DEVICE_MSC_USE_WRITE_TASK > 0))
@@ -104,12 +106,30 @@ SemaphoreHandle_t g_xMutex;
 
 void Init_Drive(void)
 {
-    
+    BOARD_USB_Disk_Config(USB_DEVICE_INTERRUPT_PRIORITY);
 }
 
 void DriveTask(void *pvParameters)
 {
-    
+    GPIO_PinWrite(BOARD_LED_RED_GPIO, BOARD_LED_RED_PIN, LOGIC_LED_ON);
+    USB_DeviceApplicationInit();
+    GPIO_PinWrite(BOARD_LED_RED_GPIO, BOARD_LED_RED_PIN, LOGIC_LED_OFF);
+    if (g_msc.deviceHandle)
+    {
+        if (xTaskCreate(USB_DeviceTask,                  /* pointer to the task */
+                        (char const *)"usb device task", /* task name for kernel awareness debugging */
+                        5000L / sizeof(portSTACK_TYPE),  /* task stack size */
+                        g_msc.deviceHandle,              /* optional task startup argument */
+                        5,                               /* initial priority */
+                        &g_msc.device_task_handle        /* optional task handle to create */
+                        ) != pdPASS)
+        {
+            usb_echo("usb device task create failed!\r\n");
+            return;
+        }
+        GPIO_PinWrite(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_PIN, LOGIC_LED_ON);
+    }
+    vTaskSuspend(NULL);
 }
 
 

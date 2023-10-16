@@ -27,6 +27,9 @@ extern "C" {
  */
 void BOARD_InitBootPins(void);
 
+#define BOARD_MODE_GPIO GPIOD /*!<@brief GPIO device name: GPIOD */
+#define BOARD_MODE_PORT PORTD /*!<@brief PORT device name: PORTD */
+#define BOARD_MODE_PIN 1U     /*!<@brief PORTD pin index: 1 */
 /*!
  * @brief Configures pin routing and optionally pin electrical features.
  *

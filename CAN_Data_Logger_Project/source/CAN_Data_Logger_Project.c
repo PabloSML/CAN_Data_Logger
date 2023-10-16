@@ -79,6 +79,9 @@ typedef enum
 static FATFS g_fileSystem; /* File system object */
 static FIL g_fileObject1;  /* File object */
 
+/* Data structure of msc device, store the information ,such as class handle */
+usb_msc_struct_t g_msc;
+
 // static const uint8_t s_buffer1[] = {'1', '2', '3', ',', '4', '5', '6', ',', '7', '8', '9', '\r', '\n'};
 
 /*! @brief SD card detect flag  */
@@ -113,26 +116,9 @@ int main(void) {
 
     op_mode_t op_mode;
 
-    // gpio_pin_config_t green_led_config = {
-    //     kGPIO_DigitalOutput,
-    //     LOGIC_LED_OFF,
-    // };
-    // GPIO_PinInit(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, &green_led_config);
-
-    // Configure GPIO for reading SW3
-    gpio_pin_config_t sw_config = {
-        kGPIO_DigitalInput,
-        0,
-    };
-    GPIO_PinInit(BOARD_SW3_GPIO, BOARD_SW3_GPIO_PIN, &sw_config);
-
     PRINTF("CAN EXISTS.\n");
 
-    // /* Demo blinky blinky lights */
-    // GPIO_PinWrite(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, LOGIC_LED_ON);
-    // GPIO_PinWrite(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, LOGIC_LED_OFF);
-
-    if (GPIO_PinRead(BOARD_SW3_GPIO, BOARD_SW3_GPIO_PIN) == LOGIC_SW_PRESSED)
+    if (GPIO_PinRead(BOARD_MODE_GPIO, BOARD_MODE_PIN) == LOGIC_SW_PRESSED)
     {
         op_mode = DRIVE_MODE;
     }
@@ -140,8 +126,6 @@ int main(void) {
     {
         op_mode = LOGGER_MODE;
     }
-
-    ////// Demo Tarjeta SD
     
     SYSMPU_Enable(SYSMPU, false);       //Que hace? No sé
 
@@ -203,12 +187,11 @@ int main(void) {
         xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
         xTaskCreate(FlexCanTask,    (char const *)"FlexCanTask",    FLEXCAN_TASK_STACK_SIZE,    NULL, FLEXCAN_TASK_PRIORITY,    NULL);
     }
-
     else if (op_mode == DRIVE_MODE)
     {
         Init_Drive();
 
-        xTaskCreate(DriveTask, (char const *)"DriveTask", DRIVE_TASK_STACK_SIZE, NULL, DRIVE_TASK_PRIORITY, NULL);
+        xTaskCreate(DriveTask, (char const *)"DriveTask", DRIVE_TASK_STACK_SIZE, &g_msc, DRIVE_TASK_PRIORITY, &g_msc.application_task_handle);
     }
 
 
@@ -225,8 +208,6 @@ int main(void) {
     }
     return 0 ;
 }
-
-
 
 static void APP_task(void *pvParameters)
 {
@@ -253,7 +234,6 @@ static void APP_task(void *pvParameters)
         
     }
 }
-
 
 static void FileAccessTask(void *pvParameters)
 {
@@ -285,6 +265,7 @@ static void FileAccessTask(void *pvParameters)
             {
                 PRINTF("0x%x ", canMsg.data[i]);
             }
+            PRINTF("\r\n");
         }
         else
         {
@@ -350,6 +331,7 @@ static void FileAccessTask(void *pvParameters)
         if (++writeTimes > DEMO_TASK_ACCESS_SDCARD_TIMES)
         {
             PRINTF("TASK: finished.\r\n");
+            GPIO_PinWrite(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, LOGIC_LED_ON);
             writeTimes = 1U;
             xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
             continue;
@@ -363,9 +345,6 @@ static void FileAccessTask(void *pvParameters)
 
     vTaskSuspend(NULL);
 }
-
-
-
 
 static void SDCARD_DetectCallBack(bool isInserted, void *userData)
 {
