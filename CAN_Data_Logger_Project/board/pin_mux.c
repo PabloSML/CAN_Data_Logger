@@ -156,16 +156,43 @@ BOARD_InitPins:
  * END ****************************************************************************************************************/
 void BOARD_InitPins(void)
 {
+
     /* Port A Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortA);
 
-    /* Port E Clock Gate Control: Clock enabled */
-    CLOCK_EnableClock(kCLOCK_PortE);
+    /* Port D Clock Gate Control: Clock enabled */
+    CLOCK_EnableClock(kCLOCK_PortD);
 
-    PORT_SetPinMux(PORTE, 26U, kPORT_MuxAsGpio);
+    // BOARD_InitButtonsPins();
+    BOARD_InitLEDsPins();
+    BOARD_InitSDHCPins();
 
-    /* PORTA2 (pin 36) is configured as TRACE_SWO */
-    PORT_SetPinMux(PORTA, 2U, kPORT_MuxAlt7);
+    gpio_pin_config_t mode_pin_config = {
+        .pinDirection = kGPIO_DigitalInput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTD1 */
+    GPIO_PinInit(BOARD_MODE_GPIO, BOARD_MODE_PIN, &mode_pin_config);
+
+    const port_pin_config_t mode_pin = {/* Internal pull-up/down resistor is disabled */
+                                   kPORT_PullUp,
+                                   /* Fast slew rate is configured */
+                                   kPORT_FastSlewRate,
+                                   /* Passive filter is disabled */
+                                   kPORT_PassiveFilterDisable,
+                                   /* Open drain is disabled */
+                                   kPORT_OpenDrainDisable,
+                                   /* Low drive strength is configured */
+                                   kPORT_LowDriveStrength,
+                                   /* Pin is configured as PTD1 */
+                                   kPORT_MuxAsGpio,
+                                   /* Pin Control Register fields [15:0] are not locked */
+                                   kPORT_UnlockRegister};
+    /* PORTD1 is configured as PTD1 */
+    PORT_SetPinConfig(BOARD_MODE_PORT, BOARD_MODE_PIN, &mode_pin);
+
+    // /* PORTA2 (pin 36) is configured as TRACE_SWO */
+    // PORT_SetPinMux(PORTA, 2U, kPORT_MuxAlt7);
 
     PORTA->PCR[2] = ((PORTA->PCR[2] &
                       /* Mask bits to zero which are setting */
@@ -183,165 +210,164 @@ void BOARD_InitPins(void)
                      | PORT_PCR_DSE(kPORT_LowDriveStrength));
 
 
-
-    /****** Copiado del ejemplo: ******/
+    // /****** Copiado del ejemplo: ******/
     
-    /* Port E Clock Gate Control: Clock enabled */
-    CLOCK_EnableClock(kCLOCK_PortE);
+    // // /* Port E Clock Gate Control: Clock enabled */
+    // // CLOCK_EnableClock(kCLOCK_PortE);
 
-    /* PORTE0 (pin 1) is configured as SDHC0_D1 */
-    PORT_SetPinMux(BOARD_SDHC0_D1_PORT, BOARD_SDHC0_D1_PIN, kPORT_MuxAlt4);
+    // /* PORTE0 (pin 1) is configured as SDHC0_D1 */
+    // PORT_SetPinMux(BOARD_SDHC0_D1_PORT, BOARD_SDHC0_D1_PIN, kPORT_MuxAlt4);
 
-    PORTE->PCR[0] =
-        ((PORTE->PCR[0] &
-          /* Mask bits to zero which are setting */
-          (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
+    // PORTE->PCR[0] =
+    //     ((PORTE->PCR[0] &
+    //       /* Mask bits to zero which are setting */
+    //       (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
 
-         /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
-          * field is set. */
-         | (uint32_t)(kPORT_PullUp)
+    //      /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
+    //       * field is set. */
+    //      | (uint32_t)(kPORT_PullUp)
 
-         /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
-         | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
+    //      /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
+    //      | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
 
-         /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
-         | PORT_PCR_ODE(kPORT_OpenDrainDisable)
+    //      /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
+    //      | PORT_PCR_ODE(kPORT_OpenDrainDisable)
 
-         /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
-          * configured as a digital output. */
-         | PORT_PCR_DSE(kPORT_HighDriveStrength));
+    //      /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
+    //       * configured as a digital output. */
+    //      | PORT_PCR_DSE(kPORT_HighDriveStrength));
 
-    /* PORTE1 (pin 2) is configured as SDHC0_D0 */
-    PORT_SetPinMux(BOARD_SDHC0_D0_PORT, BOARD_SDHC0_D0_PIN, kPORT_MuxAlt4);
+    // /* PORTE1 (pin 2) is configured as SDHC0_D0 */
+    // PORT_SetPinMux(BOARD_SDHC0_D0_PORT, BOARD_SDHC0_D0_PIN, kPORT_MuxAlt4);
 
-    PORTE->PCR[1] =
-        ((PORTE->PCR[1] &
-          /* Mask bits to zero which are setting */
-          (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
+    // PORTE->PCR[1] =
+    //     ((PORTE->PCR[1] &
+    //       /* Mask bits to zero which are setting */
+    //       (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
 
-         /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
-          * field is set. */
-         | (uint32_t)(kPORT_PullUp)
+    //      /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
+    //       * field is set. */
+    //      | (uint32_t)(kPORT_PullUp)
 
-         /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
-         | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
+    //      /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
+    //      | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
 
-         /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
-         | PORT_PCR_ODE(kPORT_OpenDrainDisable)
+    //      /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
+    //      | PORT_PCR_ODE(kPORT_OpenDrainDisable)
 
-         /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
-          * configured as a digital output. */
-         | PORT_PCR_DSE(kPORT_HighDriveStrength));
+    //      /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
+    //       * configured as a digital output. */
+    //      | PORT_PCR_DSE(kPORT_HighDriveStrength));
 
-    /* PORTE2 (pin 3) is configured as SDHC0_DCLK */
-    PORT_SetPinMux(BOARD_SDHC0_DCLK_PORT, BOARD_SDHC0_DCLK_PIN, kPORT_MuxAlt4);
+    // /* PORTE2 (pin 3) is configured as SDHC0_DCLK */
+    // PORT_SetPinMux(BOARD_SDHC0_DCLK_PORT, BOARD_SDHC0_DCLK_PIN, kPORT_MuxAlt4);
 
-    PORTE->PCR[2] =
-        ((PORTE->PCR[2] &
-          /* Mask bits to zero which are setting */
-          (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
+    // PORTE->PCR[2] =
+    //     ((PORTE->PCR[2] &
+    //       /* Mask bits to zero which are setting */
+    //       (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
 
-         /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
-          * field is set. */
-         | (uint32_t)(kPORT_PullUp)
+    //      /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
+    //       * field is set. */
+    //      | (uint32_t)(kPORT_PullUp)
 
-         /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
-         | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
+    //      /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
+    //      | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
 
-         /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
-         | PORT_PCR_ODE(kPORT_OpenDrainDisable)
+    //      /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
+    //      | PORT_PCR_ODE(kPORT_OpenDrainDisable)
 
-         /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
-          * configured as a digital output. */
-         | PORT_PCR_DSE(kPORT_HighDriveStrength));
+    //      /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
+    //       * configured as a digital output. */
+    //      | PORT_PCR_DSE(kPORT_HighDriveStrength));
 
-    /* PORTE3 (pin 4) is configured as SDHC0_CMD */
-    PORT_SetPinMux(BOARD_SDHC0_CMD_PORT, BOARD_SDHC0_CMD_PIN, kPORT_MuxAlt4);
+    // /* PORTE3 (pin 4) is configured as SDHC0_CMD */
+    // PORT_SetPinMux(BOARD_SDHC0_CMD_PORT, BOARD_SDHC0_CMD_PIN, kPORT_MuxAlt4);
 
-    PORTE->PCR[3] =
-        ((PORTE->PCR[3] &
-          /* Mask bits to zero which are setting */
-          (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
+    // PORTE->PCR[3] =
+    //     ((PORTE->PCR[3] &
+    //       /* Mask bits to zero which are setting */
+    //       (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
 
-         /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
-          * field is set. */
-         | (uint32_t)(kPORT_PullUp)
+    //      /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
+    //       * field is set. */
+    //      | (uint32_t)(kPORT_PullUp)
 
-         /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
-         | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
+    //      /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
+    //      | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
 
-         /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
-         | PORT_PCR_ODE(kPORT_OpenDrainDisable)
+    //      /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
+    //      | PORT_PCR_ODE(kPORT_OpenDrainDisable)
 
-         /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
-          * configured as a digital output. */
-         | PORT_PCR_DSE(kPORT_HighDriveStrength));
+    //      /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
+    //       * configured as a digital output. */
+    //      | PORT_PCR_DSE(kPORT_HighDriveStrength));
 
-    /* PORTE4 (pin 5) is configured as SDHC0_D3 */
-    PORT_SetPinMux(BOARD_SDHC0_D3_PORT, BOARD_SDHC0_D3_PIN, kPORT_MuxAlt4);
+    // /* PORTE4 (pin 5) is configured as SDHC0_D3 */
+    // PORT_SetPinMux(BOARD_SDHC0_D3_PORT, BOARD_SDHC0_D3_PIN, kPORT_MuxAlt4);
 
-    PORTE->PCR[4] =
-        ((PORTE->PCR[4] &
-          /* Mask bits to zero which are setting */
-          (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
+    // PORTE->PCR[4] =
+    //     ((PORTE->PCR[4] &
+    //       /* Mask bits to zero which are setting */
+    //       (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
 
-         /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
-          * field is set. */
-         | (uint32_t)(kPORT_PullUp)
+    //      /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
+    //       * field is set. */
+    //      | (uint32_t)(kPORT_PullUp)
 
-         /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
-         | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
+    //      /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
+    //      | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
 
-         /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
-         | PORT_PCR_ODE(kPORT_OpenDrainDisable)
+    //      /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
+    //      | PORT_PCR_ODE(kPORT_OpenDrainDisable)
 
-         /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
-          * configured as a digital output. */
-         | PORT_PCR_DSE(kPORT_HighDriveStrength));
+    //      /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
+    //       * configured as a digital output. */
+    //      | PORT_PCR_DSE(kPORT_HighDriveStrength));
 
-    /* PORTE5 (pin 6) is configured as SDHC0_D2 */
-    PORT_SetPinMux(BOARD_SDHC0_D2_PORT, BOARD_SDHC0_D2_PIN, kPORT_MuxAlt4);
+    // /* PORTE5 (pin 6) is configured as SDHC0_D2 */
+    // PORT_SetPinMux(BOARD_SDHC0_D2_PORT, BOARD_SDHC0_D2_PIN, kPORT_MuxAlt4);
 
-    PORTE->PCR[5] =
-        ((PORTE->PCR[5] &
-          /* Mask bits to zero which are setting */
-          (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
+    // PORTE->PCR[5] =
+    //     ((PORTE->PCR[5] &
+    //       /* Mask bits to zero which are setting */
+    //       (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_PFE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
 
-         /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
-          * field is set. */
-         | (uint32_t)(kPORT_PullUp)
+    //      /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the corresponding PE
+    //       * field is set. */
+    //      | (uint32_t)(kPORT_PullUp)
 
-         /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
-         | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
+    //      /* Passive Filter Enable: Passive input filter is disabled on the corresponding pin. */
+    //      | PORT_PCR_PFE(kPORT_PassiveFilterDisable)
 
-         /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
-         | PORT_PCR_ODE(kPORT_OpenDrainDisable)
+    //      /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
+    //      | PORT_PCR_ODE(kPORT_OpenDrainDisable)
 
-         /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
-          * configured as a digital output. */
-         | PORT_PCR_DSE(kPORT_HighDriveStrength));
+    //      /* Drive Strength Enable: High drive strength is configured on the corresponding pin, if pin is
+    //       * configured as a digital output. */
+    //      | PORT_PCR_DSE(kPORT_HighDriveStrength));
 
-    /* PORTE6 (pin 7) is configured as PTE6 */
-    PORT_SetPinMux(BOARD_SDHC_CD_PORT, BOARD_SDHC_CD_PIN, kPORT_MuxAsGpio);
+    // /* PORTE6 (pin 7) is configured as PTE6 */
+    // PORT_SetPinMux(BOARD_SDHC_CD_PORT, BOARD_SDHC_CD_PIN, kPORT_MuxAsGpio);
 
-    PORTE->PCR[6] =
-        ((PORTE->PCR[6] &
-          /* Mask bits to zero which are setting */
-          (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
+    // PORTE->PCR[6] =
+    //     ((PORTE->PCR[6] &
+    //       /* Mask bits to zero which are setting */
+    //       (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_ODE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
 
-         /* Pull Select: Internal pulldown resistor is enabled on the corresponding pin, if the corresponding PE
-          * field is set. */
-         | PORT_PCR_PS(kPORT_PullDown)
+    //      /* Pull Select: Internal pulldown resistor is enabled on the corresponding pin, if the corresponding PE
+    //       * field is set. */
+    //      | PORT_PCR_PS(kPORT_PullDown)
 
-         /* Pull Enable: Internal pullup or pulldown resistor is not enabled on the corresponding pin. */
-         | PORT_PCR_PE(kPORT_PullDisable)
+    //      /* Pull Enable: Internal pullup or pulldown resistor is not enabled on the corresponding pin. */
+    //      | PORT_PCR_PE(kPORT_PullDisable)
 
-         /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
-         | PORT_PCR_ODE(kPORT_OpenDrainDisable)
+    //      /* Open Drain Enable: Open drain output is disabled on the corresponding pin. */
+    //      | PORT_PCR_ODE(kPORT_OpenDrainDisable)
 
-         /* Drive Strength Enable: Low drive strength is configured on the corresponding pin, if pin is
-          * configured as a digital output. */
-         | PORT_PCR_DSE(kPORT_LowDriveStrength));
+    //      /* Drive Strength Enable: Low drive strength is configured on the corresponding pin, if pin is
+    //       * configured as a digital output. */
+    //      | PORT_PCR_DSE(kPORT_LowDriveStrength));
 }
 
 /* clang-format off */

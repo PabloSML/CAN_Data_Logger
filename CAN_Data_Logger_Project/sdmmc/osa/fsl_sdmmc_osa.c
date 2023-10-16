@@ -6,6 +6,7 @@
  */
 
 #include "fsl_sdmmc_osa.h"
+#include "fsl_os_abstraction_bm.h"
 
 /*******************************************************************************
  * Definitons
