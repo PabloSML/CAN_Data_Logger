@@ -119,7 +119,7 @@ void Init_FlexCAN(void)
     flexcanConfig.clkSrc = EXAMPLE_CAN_CLK_SOURCE;
 #endif
 
-    flexcanConfig.enableLoopBack = true;
+    flexcanConfig.enableLoopBack = false;
 
 #if (defined(USE_IMPROVED_TIMING_CONFIG) && USE_IMPROVED_TIMING_CONFIG)
     flexcan_timing_config_t timing_config;

@@ -166,6 +166,7 @@ void BOARD_InitPins(void)
     // BOARD_InitButtonsPins();
     BOARD_InitLEDsPins();
     BOARD_InitSDHCPins();
+    BOARD_InitCANPins();
 
     gpio_pin_config_t mode_pin_config = {
         .pinDirection = kGPIO_DigitalInput,
@@ -369,6 +370,53 @@ void BOARD_InitPins(void)
     //       * configured as a digital output. */
     //      | PORT_PCR_DSE(kPORT_LowDriveStrength));
 }
+
+/* FUNCTION ************************************************************************************************************
+ *
+ * Function Name : BOARD_InitCANPins
+ * Description   : Configures pin routing and optionally pin electrical features.
+ *
+ * END ****************************************************************************************************************/
+void BOARD_InitCANPins(void)
+{
+    /* Port B Clock Gate Control: Clock enabled */
+    CLOCK_EnableClock(kCLOCK_PortB);
+
+    const port_pin_config_t canTx = {/* Internal pull-up resistor is enabled */
+                                   kPORT_PullUp,
+                                   /* Fast slew rate is configured */
+                                   kPORT_FastSlewRate,
+                                   /* Passive filter is disabled */
+                                   kPORT_PassiveFilterDisable,
+                                   /* Open drain is disabled */
+                                   kPORT_OpenDrainDisable,
+                                   /* Low drive strength is configured */
+                                   kPORT_LowDriveStrength,
+                                   /* Pin is configured as CAN0_TX */
+                                   kPORT_MuxAlt2,
+                                   /* Pin Control Register fields [15:0] are not locked */
+                                   kPORT_UnlockRegister};
+    /* PORTB18 (pin 64) is configured as CAN0_TX */
+    PORT_SetPinConfig(BOARD_CANTX_PORT, BOARD_CANTX_PIN, &canTx);
+
+    const port_pin_config_t canRx = {/* Internal pull-up resistor is enabled */
+                                   kPORT_PullUp,
+                                   /* Fast slew rate is configured */
+                                   kPORT_FastSlewRate,
+                                   /* Passive filter is disabled */
+                                   kPORT_PassiveFilterDisable,
+                                   /* Open drain is disabled */
+                                   kPORT_OpenDrainDisable,
+                                   /* Low drive strength is configured */
+                                   kPORT_LowDriveStrength,
+                                   /* Pin is configured as CAN0_RX */
+                                   kPORT_MuxAlt2,
+                                   /* Pin Control Register fields [15:0] are not locked */
+                                   kPORT_UnlockRegister};
+    /* PORTB19 (pin 65) is configured as CAN0_RX */
+    PORT_SetPinConfig(BOARD_CANRX_PORT, BOARD_CANRX_PIN, &canRx);
+}
+
 
 /* clang-format off */
 /*

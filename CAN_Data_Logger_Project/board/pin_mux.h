@@ -36,6 +36,24 @@ void BOARD_InitBootPins(void);
  */
 void BOARD_InitPins(void);
 
+/*! @name PORTB18 (number 64),
+  @{ */
+#define BOARD_CANTX_PORT PORTB /*!<@brief PORT device name: PORTB */
+#define BOARD_CANTX_PIN 18U     /*!<@brief PORTB pin index: 18 */
+                             /* @} */
+
+/*! @name PORTB19 (number 65),
+  @{ */
+#define BOARD_CANRX_PORT PORTB /*!<@brief PORT device name: PORTB */
+#define BOARD_CANRX_PIN 19U     /*!<@brief PORTB pin index: 19 */
+                             /* @} */
+
+/*!
+ * @brief Configures pin routing and optionally pin electrical features.
+ *
+ */
+void BOARD_InitCANPins(void);
+
 /*! @name PORTC6 (number 78), U8[11]/SW2
   @{ */
 #define BOARD_SW2_GPIO GPIOC /*!<@brief GPIO device name: GPIOC */

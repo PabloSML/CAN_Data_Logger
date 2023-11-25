@@ -9,6 +9,7 @@
 #define _FSL_PORT_H_
 
 #include "fsl_common.h"
+#include "MK64F12_features.h"
 
 /*!
  * @addtogroup port
