@@ -6,3 +6,4 @@ AzureRTOS_TAD_logs
 Debug
 *.launch
 .vscode/
+TP2_Comunicacion_Serie/

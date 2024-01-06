@@ -120,6 +120,8 @@ void Init_FlexCAN(void)
 #endif
 
     flexcanConfig.enableLoopBack = false;
+    // flexcanConfig.baudRate = 125000U;
+    flexcanConfig.bitRate = 125000U;
 
 #if (defined(USE_IMPROVED_TIMING_CONFIG) && USE_IMPROVED_TIMING_CONFIG)
     flexcan_timing_config_t timing_config;
@@ -238,8 +240,9 @@ void FlexCanTask(void *pvParameters)
             LOG_INFO("tx word%d = 0x%x\r\n", i, txFrame.dataWord[i]);
         }
     #else
-        // LOG_INFO("tx word0 = 0x%x\r\n", txFrame.dataWord0);
-        // LOG_INFO("tx word1 = 0x%x\r\n", txFrame.dataWord1);
+        LOG_INFO("CAN ID: 0x%x\r\n", txFrame.id);
+        LOG_INFO("tx word0 = 0x%x\r\n", txFrame.dataWord0);
+        LOG_INFO("tx word1 = 0x%x\r\n", txFrame.dataWord1);
     #endif
 
         /* Send data through Tx Message Buffer. */
@@ -277,8 +280,8 @@ void FlexCanTask(void *pvParameters)
             can_msg.data[6] = rxFrame.dataByte6;
             can_msg.data[7] = rxFrame.dataByte7;
 
-            // Send the CAN message struct to the CAN message queue
-            xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
+            // // Send the CAN message struct to the CAN message queue
+            // xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
 
             // xSemaphoreGive(s_CanMsgSemaphore);
 
@@ -289,8 +292,9 @@ void FlexCanTask(void *pvParameters)
                 LOG_INFO("rx word%d = 0x%x\r\n", i, rxFrame.dataWord[i]);
             }
         #else
-            // LOG_INFO("rx word0 = 0x%x\r\n", rxFrame.dataWord0);
-            // LOG_INFO("rx word1 = 0x%x\r\n", rxFrame.dataWord1);
+            LOG_INFO("CAN ID: 0x%x\r\n", rxFrame.id);
+            LOG_INFO("rx word0 = 0x%x\r\n", rxFrame.dataWord0);
+            LOG_INFO("rx word1 = 0x%x\r\n", rxFrame.dataWord1);
         #endif
 
             //LOG_INFO("\r\n==FlexCAN loopback example -- Finish.==\r\n");

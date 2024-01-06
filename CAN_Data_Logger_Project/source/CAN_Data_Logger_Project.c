@@ -156,8 +156,8 @@ int main(void) {
         /* Set a start date time and start RT */
         rtc_datetime_t date;
         date.year   = 2023U;
-        date.month  = 5U;
-        date.day    = 4U;
+        date.month  = 12U;
+        date.day    = 10U;
         date.hour   = 0U;
         date.minute = 0;
         date.second = 0;
@@ -183,8 +183,8 @@ int main(void) {
         //             &test_task_handle               /* optional task handle to create */
         //             );
 
-        xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
-        xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
+        // xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
+        // xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
         xTaskCreate(FlexCanTask,    (char const *)"FlexCanTask",    FLEXCAN_TASK_STACK_SIZE,    NULL, FLEXCAN_TASK_PRIORITY,    NULL);
     }
     else if (op_mode == DRIVE_MODE)
