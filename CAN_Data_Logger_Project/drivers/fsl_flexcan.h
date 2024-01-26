@@ -38,6 +38,9 @@
 /*! @brief FlexCAN Frame ID helper macro. */
 #define FLEXCAN_ID_STD(id) \
     (((uint32_t)(((uint32_t)(id)) << CAN_ID_STD_SHIFT)) & CAN_ID_STD_MASK) /*!< Standard Frame ID helper macro. */
+/*! @brief FlexCAN Inverse Transform Frame ID helper macro. */
+#define FLEXCAN_ID_INVERSE(id) \
+    (((uint32_t)(((uint32_t)(id)) >> CAN_ID_STD_SHIFT)) & (0x000007FFU)) /*!< Inverse Transform Frame ID helper macro. */
 #define FLEXCAN_ID_EXT(id)                                \
     (((uint32_t)(((uint32_t)(id)) << CAN_ID_EXT_SHIFT)) & \
      (CAN_ID_EXT_MASK | CAN_ID_STD_MASK)) /*!< Extend Frame ID helper macro. */

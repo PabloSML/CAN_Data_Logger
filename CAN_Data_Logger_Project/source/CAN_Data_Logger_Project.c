@@ -155,10 +155,10 @@ int main(void) {
         }
         /* Set a start date time and start RT */
         rtc_datetime_t date;
-        date.year   = 2023U;
-        date.month  = 12U;
-        date.day    = 10U;
-        date.hour   = 0U;
+        date.year   = 2024U;
+        date.month  = 02U;
+        date.day    = 19U;
+        date.hour   = 17U;
         date.minute = 0;
         date.second = 0;
 
@@ -183,8 +183,8 @@ int main(void) {
         //             &test_task_handle               /* optional task handle to create */
         //             );
 
-        // xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
-        // xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
+        xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
+        xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
         xTaskCreate(FlexCanTask,    (char const *)"FlexCanTask",    FLEXCAN_TASK_STACK_SIZE,    NULL, FLEXCAN_TASK_PRIORITY,    NULL);
     }
     else if (op_mode == DRIVE_MODE)
@@ -244,7 +244,7 @@ static void FileAccessTask(void *pvParameters)
 
     xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
 
-    SemaphoreHandle_t s_CanMsgSemaphore = getCanMsgSemaphore();
+    // SemaphoreHandle_t s_CanMsgSemaphore = getCanMsgSemaphore();
     QueueHandle_t canMsgQueue = getCanMsgQueue();
     can_msg_t canMsg;
 
@@ -256,6 +256,7 @@ static void FileAccessTask(void *pvParameters)
 
         if (xQueueReceive(canMsgQueue, &canMsg, portMAX_DELAY) == pdTRUE)   // Suspende la tarea hasta que haya un mensaje en la cola
         {
+            GPIO_PinWrite(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, LOGIC_LED_ON);
             PRINTF("\r\nHola, recibí un mensaje de CAN!\r\n");
             PRINTF("Timestamp = %d\r\n", canMsg.timestamp);
             PRINTF("ID = 0x%x\r\n", canMsg.id);
@@ -331,7 +332,7 @@ static void FileAccessTask(void *pvParameters)
         if (++writeTimes > DEMO_TASK_ACCESS_SDCARD_TIMES)
         {
             PRINTF("TASK: finished.\r\n");
-            GPIO_PinWrite(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, LOGIC_LED_ON);
+            GPIO_PinWrite(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_PIN, LOGIC_LED_OFF);
             writeTimes = 1U;
             xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
             continue;
@@ -361,6 +362,7 @@ static void CardDetectTask(void *pvParameters)
     /* SD host init function */
     if (SD_HostInit(&g_sd) == kStatus_Success)
     {
+        PRINTF("\r\nPlease insert a card into board.\r\n");
         while (true)
         {
             /* take card detect semaphore */
@@ -382,6 +384,8 @@ static void CardDetectTask(void *pvParameters)
                         {
                             continue;
                         }
+                        PRINTF("\r\nFile system ready.\r\n");
+                        GPIO_PinWrite(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_PIN, LOGIC_LED_ON);
                         xTaskNotifyGive(fileAccessTaskHandle);
                     }
                 }
@@ -431,24 +435,25 @@ static status_t DEMO_MakeFileSystem(void)
     }
 #endif /* FF_USE_MKFS */
 
-    PRINTF("\r\nCreate directory......\r\n");
-    error = f_mkdir(_T("/dir_1"));
-    if (error)
-    {
-        if (error == FR_EXIST)
-        {
-            PRINTF("Directory exists.\r\n");
-        }
-        else
-        {
-            PRINTF("Make directory failed.\r\n");
-            return kStatus_Fail;
-        }
-    }
-    else
-    {
-        PRINTF("\r\nDirectory created.\r\n");
-    }
+    // PRINTF("\r\nCreate directory......\r\n");
+    // error = f_mkdir(_T("/dir_1"));
+    // if (error)
+    // {
+    //     if (error == FR_EXIST)
+    //     {
+    //         PRINTF("Directory exists.\r\n");
+    //     }
+    //     else
+    //     {
+    //         PRINTF("Make directory failed.\r\n");
+    //         GPIO_PinWrite(BOARD_LED_RED_GPIO, BOARD_LED_RED_PIN, LOGIC_LED_ON);
+    //         return kStatus_Fail;
+    //     }
+    // }
+    // else
+    // {
+    //     PRINTF("\r\nDirectory created.\r\n");
+    // }
 
     return kStatus_Success;
 }
