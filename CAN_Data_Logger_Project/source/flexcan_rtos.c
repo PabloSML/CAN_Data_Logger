@@ -99,7 +99,7 @@ static FLEXCAN_CALLBACK(flexcan_callback)
 void Init_FlexCAN(void)
 {
     flexcan_config_t flexcanConfig;
-    flexcan_rx_mb_config_t mbConfig;
+    // flexcan_rx_mb_config_t mbConfig;
     flexcan_rx_fifo_config_t rxFifoConfig;
 
     /* Init FlexCAN module. */
