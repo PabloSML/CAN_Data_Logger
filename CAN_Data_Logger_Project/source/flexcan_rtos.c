@@ -122,6 +122,7 @@ void Init_FlexCAN(void)
 #endif
 
     flexcanConfig.enableLoopBack = false;
+    // flexcanConfig.enableListenOnlyMode = true;   // NO FUNCIONA (se puede arreglar quizas)
     // flexcanConfig.baudRate = 125000U;
     flexcanConfig.bitRate = 1000000U;
     // flexcanConfig.enableIndividMask = true;
@@ -212,7 +213,7 @@ void FlexCanTask(void *pvParameters)
 
     while (1)
     {
-        vTaskDelay(100);   // Delete this delay to test faster CAN transfers.
+        // vTaskDelay(100);   // Delete this delay to test faster CAN transfers.
     //     /* Start receive data through Rx Message Buffer. */
     //     rxXfer.mbIdx = (uint8_t)RX_MESSAGE_BUFFER_NUM;
     // #if (defined(USE_CANFD) && USE_CANFD)

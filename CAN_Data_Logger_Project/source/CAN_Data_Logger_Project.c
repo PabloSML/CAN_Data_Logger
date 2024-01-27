@@ -60,7 +60,7 @@
 #include "drive_rtos.h"
 
 #define DEMO_TASK_GET_SEM_BLOCK_TICKS 1U
-#define DEMO_TASK_ACCESS_SDCARD_TIMES 10U
+#define DEMO_TASK_ACCESS_SDCARD_TIMES 254U
 #define ACCESSFILE_TASK_STACK_SIZE (512U)
 #define ACCESSFILE_TASK_PRIORITY (configMAX_PRIORITIES - 2U)
 #define CARDDETECT_TASK_STACK_SIZE (512U)
@@ -219,12 +219,12 @@ static void APP_task(void *pvParameters)
     {
         /* Get date time */
         RTC_GetDatetime(RTC, &date);
-        printf("Current datetime: %04hd-%02hd-%02hd %02hd:%02hd:%02hd\r\n", date.year, date.month, date.day, date.hour,
+        PRINTF("Current datetime: %04hd-%02hd-%02hd %02hd:%02hd:%02hd\r\n", date.year, date.month, date.day, date.hour,
                 date.minute, date.second);
         
         counter++;
         
-        printf("Hola Mundo #%d, milisegundos: %d\n\n", counter, xTaskGetTickCount());
+        PRINTF("Hola Mundo #%d, milisegundos: %d\n\n", counter, xTaskGetTickCount());
         
         /* Place this task in the blocked state until it is time to run again.
         The block time is specified in ticks, the constant used converts ticks
@@ -257,16 +257,16 @@ static void FileAccessTask(void *pvParameters)
         if (xQueueReceive(canMsgQueue, &canMsg, portMAX_DELAY) == pdTRUE)   // Suspende la tarea hasta que haya un mensaje en la cola
         {
             GPIO_PinWrite(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, LOGIC_LED_ON);
-            PRINTF("\r\nHola, recibí un mensaje de CAN!\r\n");
-            PRINTF("Timestamp = %d\r\n", canMsg.timestamp);
-            PRINTF("ID = 0x%x\r\n", canMsg.id);
-            PRINTF("Length = %d\r\n", canMsg.length);
-            PRINTF("Data = ");
-            for (uint8_t i = 0; i < canMsg.length; i++)
-            {
-                PRINTF("0x%x ", canMsg.data[i]);
-            }
-            PRINTF("\r\n");
+            // PRINTF("\r\nHola, recibí un mensaje de CAN!\r\n");
+            // PRINTF("Timestamp = %d\r\n", canMsg.timestamp);
+            // PRINTF("ID = 0x%x\r\n", canMsg.id);
+            // PRINTF("Length = %d\r\n", canMsg.length);
+            // PRINTF("Data = ");
+            // for (uint8_t i = 0; i < canMsg.length; i++)
+            // {
+            //     PRINTF("0x%x ", canMsg.data[i]);
+            // }
+            // PRINTF("\r\n");
         }
         else
         {
@@ -285,12 +285,18 @@ static void FileAccessTask(void *pvParameters)
             {
                 if (f_open(&g_fileObject1, _T("/dir_1/magic.csv"), (FA_WRITE | FA_CREATE_NEW)) != FR_OK)
                 {
+                    GPIO_PinWrite(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_PIN, LOGIC_LED_OFF);
+                    GPIO_PinWrite(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, LOGIC_LED_OFF);
+                    GPIO_PinWrite(BOARD_LED_RED_GPIO, BOARD_LED_RED_PIN, LOGIC_LED_ON);
                     PRINTF("Create file failed.\r\n");
                     break;
                 }
             }
             else
             {
+                GPIO_PinWrite(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_PIN, LOGIC_LED_OFF);
+                GPIO_PinWrite(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, LOGIC_LED_OFF);
+                GPIO_PinWrite(BOARD_LED_RED_GPIO, BOARD_LED_RED_PIN, LOGIC_LED_ON);
                 PRINTF("Open file failed.\r\n");
                 break;
             }
@@ -338,7 +344,7 @@ static void FileAccessTask(void *pvParameters)
             continue;
         }
         {
-            PRINTF("TASK: write file succeded.\r\n");
+            // PRINTF("TASK: write file succeded.\r\n");
         }
 
         // }
