@@ -39,7 +39,6 @@
 #include "clock_config.h"
 #include "MK64F12.h"
 #include "fsl_debug_console.h"
-/* TODO: insert other include files here. */
 #include "fsl_gpio.h"
 
 #include "FreeRTOS.h"
@@ -48,14 +47,15 @@
 
 #include "fsl_rtc.h"
 
-// #include "fsl_sd.h"
-// #include "ff.h"
-// #include "sdmmc_config.h"
 #include "fsl_sysmpu.h"
 
 #include "logging_rtos.h"
 #include "flexcan_rtos.h"
 #include "drive_rtos.h"
+
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
 
 #define DEMO_TASK_GET_SEM_BLOCK_TICKS 1U
 #define ACCESSFILE_TASK_STACK_SIZE (512U)
@@ -66,6 +66,10 @@
 #define FLEXCAN_TASK_PRIORITY (configMAX_PRIORITIES - 3U)
 #define DRIVE_TASK_PRIORITY (configMAX_PRIORITIES - 3U)
 
+/*******************************************************************************
+ * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
+ ******************************************************************************/
+
 // Modes of operation
 typedef enum
 {
@@ -73,16 +77,17 @@ typedef enum
     DRIVE_MODE
 } op_mode_t;
 
-// Variables
+/*******************************************************************************
+ * Variables
+ ******************************************************************************/
 
 /* Data structure of msc device, store the information ,such as class handle */
 usb_msc_struct_t g_msc;
+static TaskHandle_t fileAccessTaskHandle;
 
-// static const uint8_t s_buffer1[] = {'1', '2', '3', ',', '4', '5', '6', ',', '7', '8', '9', '\r', '\n'};
-
-// TaskHandle_t test_task_handle;
-
-// static void APP_task(void *pvParameters);
+/*******************************************************************************
+ * Code
+ ******************************************************************************/
 
 /*
  * @brief   Application entry point.
@@ -116,6 +121,7 @@ int main(void) {
     if (op_mode == LOGGER_MODE)
     {
         Init_FlexCAN();
+        Init_CardDetect(&fileAccessTaskHandle);
 
         /* Init RTC */
         /*
@@ -158,15 +164,6 @@ int main(void) {
         /* Start the RTC time counter */
         RTC_StartTimer(RTC);
 
-        // /* Demo de RTOS */
-        // xTaskCreate(APP_task,                       /* pointer to the task */
-        //             (char const *)"app task",       /* task name for kernel awareness debugging */
-        //             512L / sizeof(portSTACK_TYPE), /* task stack size */
-        //             NULL,                           /* optional task startup argument */
-        //             3,                              /* initial priority */
-        //             &test_task_handle               /* optional task handle to create */
-        //             );
-        TaskHandle_t fileAccessTaskHandle;
         xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
         xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
         xTaskCreate(FlexCanTask,    (char const *)"FlexCanTask",    FLEXCAN_TASK_STACK_SIZE,    NULL, FLEXCAN_TASK_PRIORITY,    NULL);
@@ -191,29 +188,3 @@ int main(void) {
     }
     return 0 ;
 }
-
-// static void APP_task(void *pvParameters)
-// {
-//     //xNextWakeTime = xTaskGetTickCount();
-//     static unsigned long counter = 0;
-//     rtc_datetime_t date;
-
-//     while(true)
-//     {
-//         /* Get date time */
-//         RTC_GetDatetime(RTC, &date);
-//         PRINTF("Current datetime: %04hd-%02hd-%02hd %02hd:%02hd:%02hd\r\n", date.year, date.month, date.day, date.hour,
-//                 date.minute, date.second);
-        
-//         counter++;
-        
-//         PRINTF("Hola Mundo #%d, milisegundos: %d\n\n", counter, xTaskGetTickCount());
-        
-//         /* Place this task in the blocked state until it is time to run again.
-//         The block time is specified in ticks, the constant used converts ticks
-//         to ms.  The task will not consume any CPU time while it is in the
-//         Blocked state. */
-//         vTaskDelay( 1000 );
-        
-//     }
-// }

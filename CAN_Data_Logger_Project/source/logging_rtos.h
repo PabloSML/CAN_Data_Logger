@@ -20,6 +20,8 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
+#define CREATE_DIR 0
+
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -29,17 +31,18 @@
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
-extern TaskHandle_t fileAccessTaskHandle;
 
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
+void Init_CardDetect(TaskHandle_t* handle);
 /*
 * @brief complete documentation for this function :)
 */
 void CardDetectTask(void *pvParameters);
 void FileAccessTask(void *pvParameters);
+void CloseLoggingFile(void);
 
 
 /*******************************************************************************

@@ -63,34 +63,15 @@ static SemaphoreHandle_t s_CanMsgSemaphore = NULL;
  */
 static FLEXCAN_CALLBACK(flexcan_callback)
 {
-    // BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    
     switch (status)
     {
         /* Process FlexCAN Rx event. */
         case kStatus_FLEXCAN_RxFifoIdle:
-            // if (RX_MESSAGE_BUFFER_NUM == result)
-            // {
             xSemaphoreGiveFromISR(s_FlexCanSemaphore, NULL);
-            rxComplete = true;
-            // }
             break;
-
-        /* Process FlexCAN Tx event. */
-        case kStatus_FLEXCAN_TxIdle:
-            if (TX_MESSAGE_BUFFER_NUM == result)
-            {
-                txComplete = true;
-            }
-            break;
-
         default:
             break;
     }
-    
-    // xSemaphoreGiveFromISR(s_FlexCanSemaphore, &xHigherPriorityTaskWoken);
-
-    // portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 /*!
@@ -99,7 +80,6 @@ static FLEXCAN_CALLBACK(flexcan_callback)
 void Init_FlexCAN(void)
 {
     flexcan_config_t flexcanConfig;
-    // flexcan_rx_mb_config_t mbConfig;
     flexcan_rx_fifo_config_t rxFifoConfig;
 
     /* Init FlexCAN module. */
@@ -124,7 +104,7 @@ void Init_FlexCAN(void)
     flexcanConfig.enableLoopBack = false;
     // flexcanConfig.enableListenOnlyMode = true;   // NO FUNCIONA (se puede arreglar quizas)
     // flexcanConfig.baudRate = 125000U;
-    flexcanConfig.bitRate = 1000000U;
+    flexcanConfig.bitRate = 125000U;
     // flexcanConfig.enableIndividMask = true;
 
 #if (defined(USE_IMPROVED_TIMING_CONFIG) && USE_IMPROVED_TIMING_CONFIG)
@@ -161,30 +141,13 @@ void Init_FlexCAN(void)
     FLEXCAN_Init(EXAMPLE_CAN, &flexcanConfig, EXAMPLE_CAN_CLK_FREQ);
 #endif
 
-//     /* Setup Rx Message Buffer. */
-//     mbConfig.format = kFLEXCAN_FrameFormatStandard;
-//     mbConfig.type   = kFLEXCAN_FrameTypeData;
-//     mbConfig.id     = FLEXCAN_ID_STD(0x223);
-// #if (defined(USE_CANFD) && USE_CANFD)
-//     FLEXCAN_SetFDRxMbConfig(EXAMPLE_CAN, RX_MESSAGE_BUFFER_NUM, &mbConfig, true);
-// #else
-//     FLEXCAN_SetRxMbConfig(EXAMPLE_CAN, RX_MESSAGE_BUFFER_NUM, &mbConfig, true);
-// #endif
-
     /* Setup Rx FIFO */
     FLEXCAN_SetRxFifoGlobalMask(EXAMPLE_CAN, 0);    /* Set Rx FIFO global mask to receive all frames. */
-    rxFifoConfig.idFilterTable = CAN0_BASE + 0xE0u;
+    rxFifoConfig.idFilterTable = (uint32_t*)(CAN0_BASE + 0xE0u);
     rxFifoConfig.idFilterNum  = 0;
     rxFifoConfig.idFilterType = kFLEXCAN_RxFifoFilterTypeA;
     rxFifoConfig.priority     = kFLEXCAN_RxFifoPrioHigh;
     FLEXCAN_SetRxFifoConfig(EXAMPLE_CAN, &rxFifoConfig, true);
-
-// /* Setup Tx Message Buffer. */
-// #if (defined(USE_CANFD) && USE_CANFD)
-//     FLEXCAN_SetFDTxMbConfig(EXAMPLE_CAN, TX_MESSAGE_BUFFER_NUM, true);
-// #else
-//     FLEXCAN_SetTxMbConfig(EXAMPLE_CAN, TX_MESSAGE_BUFFER_NUM, true);
-// #endif
 
     /* set IRQ priority */
     NVIC_SetPriority(CAN0_ORed_Message_buffer_IRQn, 5);
@@ -213,74 +176,13 @@ void FlexCanTask(void *pvParameters)
 
     while (1)
     {
-        // vTaskDelay(100);   // Delete this delay to test faster CAN transfers.
-    //     /* Start receive data through Rx Message Buffer. */
-    //     rxXfer.mbIdx = (uint8_t)RX_MESSAGE_BUFFER_NUM;
-    // #if (defined(USE_CANFD) && USE_CANFD)
-    //     rxXfer.framefd = &rxFrame;
-    //     (void)FLEXCAN_TransferFDReceiveNonBlocking(EXAMPLE_CAN, &flexcanHandle, &rxXfer);
-    // #else
-    //     rxXfer.frame = &rxFrame;
-    //     (void)FLEXCAN_TransferReceiveNonBlocking(EXAMPLE_CAN, &flexcanHandle, &rxXfer);
-    // #endif
-
         /* Start receive data through Rx Fifo */
         rxFifoXfer.frame = &rxFrame;
         (void)FLEXCAN_TransferReceiveFifoNonBlocking(EXAMPLE_CAN, &flexcanHandle, &rxFifoXfer);
 
-    //     /* Prepare Tx Frame for sending. */
-    //     txFrame.format = (uint8_t)kFLEXCAN_FrameFormatStandard;
-    //     txFrame.type   = (uint8_t)kFLEXCAN_FrameTypeData;
-    //     txFrame.id     = FLEXCAN_ID_STD(0x123);
-    //     txFrame.length = (uint8_t)DLC;
-    // #if (defined(USE_CANFD) && USE_CANFD)
-    //     txFrame.brs = 1U;
-    // #endif
-    // #if (defined(USE_CANFD) && USE_CANFD)
-    //     uint8_t i = 0;
-    //     for (i = 0; i < DWORD_IN_MB; i++)
-    //     {
-    //         txFrame.dataWord[i] = i;
-    //     }
-    // #else
-    //     txFrame.dataWord0 = CAN_WORD0_DATA_BYTE_0(0x11) | CAN_WORD0_DATA_BYTE_1(0x22) | CAN_WORD0_DATA_BYTE_2(0x33) |
-    //                         CAN_WORD0_DATA_BYTE_3(0x44);
-    //     txFrame.dataWord1 = CAN_WORD1_DATA_BYTE_4(0x55) | CAN_WORD1_DATA_BYTE_5(0x66) | CAN_WORD1_DATA_BYTE_6(0x77) |
-    //                         CAN_WORD1_DATA_BYTE_7(0x88);
-    // #endif
-
-    //     // LOG_INFO("Send message from MB%d to MB%d\r\n", TX_MESSAGE_BUFFER_NUM, RX_MESSAGE_BUFFER_NUM);
-    // #if (defined(USE_CANFD) && USE_CANFD)
-    //     for (i = 0; i < DWORD_IN_MB; i++)
-    //     {
-    //         LOG_INFO("tx word%d = 0x%x\r\n", i, txFrame.dataWord[i]);
-    //     }
-    // #else
-    //     LOG_INFO("CAN ID: 0x%x\r\n", txFrame.id);
-    //     LOG_INFO("tx word0 = 0x%x\r\n", txFrame.dataWord0);
-    //     LOG_INFO("tx word1 = 0x%x\r\n", txFrame.dataWord1);
-    // #endif
-
-    //     /* Send data through Tx Message Buffer. */
-    //     txXfer.mbIdx = (uint8_t)TX_MESSAGE_BUFFER_NUM;
-    // #if (defined(USE_CANFD) && USE_CANFD)
-    //     txXfer.framefd = &txFrame;
-    //     (void)FLEXCAN_TransferFDSendNonBlocking(EXAMPLE_CAN, &flexcanHandle, &txXfer);
-    // #else
-    //     txXfer.frame = &txFrame;
-    //     (void)FLEXCAN_TransferSendNonBlocking(EXAMPLE_CAN, &flexcanHandle, &txXfer);
-    // #endif
-
         /* Waiting for Rx Message finish. */
-        if  (false || (xSemaphoreTake(s_FlexCanSemaphore, portMAX_DELAY) == pdTRUE)){
-
-
-            // while(!txComplete){}
-            // LOG_INFO("Good news, tx complete\r\n");
-            
-            // /* Waiting for Rx Message finish. */
-            // while (!rxComplete){}
-
+        if  (xSemaphoreTake(s_FlexCanSemaphore, portMAX_DELAY) == pdTRUE)
+        {
             // Create a CAN message struct with the received data
             can_msg.timestamp = rxFrame.timestamp;
             can_msg.id = FLEXCAN_ID_INVERSE(rxFrame.id);
@@ -296,30 +198,7 @@ void FlexCanTask(void *pvParameters)
 
             // Send the CAN message struct to the CAN message queue
             xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
-
-            // xSemaphoreGive(s_CanMsgSemaphore);
-
-            // LOG_INFO("\r\nReceived message from MB%d\r\n", RX_MESSAGE_BUFFER_NUM);
-        // #if (defined(USE_CANFD) && USE_CANFD)
-        //     for (i = 0; i < DWORD_IN_MB; i++)
-        //     {
-        //         LOG_INFO("rx word%d = 0x%x\r\n", i, rxFrame.dataWord[i]);
-        //     }
-        // #else
-        //     LOG_INFO("CAN ID: 0x%x\r\n", FLEXCAN_ID_INVERSE(rxFrame.id));
-        //     LOG_INFO("Timestamp = %d\r\n", rxFrame.timestamp);
-        //     LOG_INFO("rx word0 = 0x%x\r\n", rxFrame.dataWord0);
-        //     LOG_INFO("rx word1 = 0x%x\r\n", rxFrame.dataWord1);
-        // #endif
-            rxComplete = false;
-            //LOG_INFO("\r\n==FlexCAN loopback example -- Finish.==\r\n");
         }
     }
-
     vTaskSuspend(NULL);
-}
-
-
-SemaphoreHandle_t getCanMsgSemaphore(void){
-    return s_CanMsgSemaphore;
 }

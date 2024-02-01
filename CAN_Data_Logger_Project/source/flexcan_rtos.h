@@ -39,7 +39,6 @@ typedef struct {
   uint32_t id;
   uint8_t length;
   uint8_t data[8];
-//  bool ack;
 } can_msg_t;
 
 /*******************************************************************************
@@ -51,6 +50,9 @@ typedef struct {
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
+/*
+* @brief Function that initializes the FlexCAN module
+*/
 void Init_FlexCAN(void);
 
 /*
@@ -63,7 +65,6 @@ QueueHandle_t getCanMsgQueue(void);
  */
 void FlexCanTask(void *pvParameters);
 
-SemaphoreHandle_t getCanMsgSemaphore(void);
 /*******************************************************************************
  ******************************************************************************/
 

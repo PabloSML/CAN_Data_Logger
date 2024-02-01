@@ -161,6 +161,7 @@ extern "C" {
  * API
  ******************************************************************************/
 void BOARD_InitDebugConsole(void);
+void BOARD_WriteLEDs(bool red, bool green, bool blue);
 #if defined(SDK_I2C_BASED_COMPONENT_USED) && SDK_I2C_BASED_COMPONENT_USED
 void BOARD_I2C_Init(I2C_Type *base, uint32_t clkSrc_Hz);
 status_t BOARD_I2C_Send(I2C_Type *base,

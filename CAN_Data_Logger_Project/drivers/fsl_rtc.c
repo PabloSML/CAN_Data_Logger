@@ -314,8 +314,13 @@ void RTC_GetDatetime(RTC_Type *base, rtc_datetime_t *datetime)
     assert(NULL != datetime);
 
     uint32_t seconds = 0;
+    uint32_t seconds2 = 0;
 
-    seconds = base->TSR;
+    do {
+        seconds = base->TSR;
+        seconds2 = base->TSR;
+    } while (seconds != seconds2);
+
     RTC_ConvertSecondsToDatetime(seconds, datetime);
 }
 
