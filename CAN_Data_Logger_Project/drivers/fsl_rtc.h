@@ -55,6 +55,7 @@ typedef enum _rtc_status_flags
     kRTC_TimeInvalidFlag  = (1U << 0U), /*!< Time invalid flag */
     kRTC_TimeOverflowFlag = (1U << 1U), /*!< Time overflow flag */
     kRTC_AlarmFlag        = (1U << 2U), /*!< Alarm flag*/
+    kRTC_TimeCounterEnableFlag = (1U << 4U), /*!< Time counter enable flag */
 #if defined(FSL_FEATURE_RTC_HAS_MONOTONIC) && (FSL_FEATURE_RTC_HAS_MONOTONIC)
     kRTC_MonotonicOverflowFlag = (1U << 3U), /*!< Monotonic Overflow Flag */
 #endif                                       /* FSL_FEATURE_RTC_HAS_MONOTONIC */

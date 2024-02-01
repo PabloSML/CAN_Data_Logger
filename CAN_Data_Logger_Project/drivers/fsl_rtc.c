@@ -619,6 +619,10 @@ uint32_t RTC_GetStatusFlags(RTC_Type *base)
     {
         tmp32 |= (uint32_t)kRTC_AlarmFlag;
     }
+    if (0U != (RTC_SR_TCE_MASK & base->SR))
+    {
+        tmp32 |= (uint32_t)kRTC_TimeCounterEnableFlag;
+    }
 #if defined(FSL_FEATURE_RTC_HAS_MONOTONIC) && (FSL_FEATURE_RTC_HAS_MONOTONIC)
     if (0U != (RTC_SR_MOF_MASK & base->SR))
     {
