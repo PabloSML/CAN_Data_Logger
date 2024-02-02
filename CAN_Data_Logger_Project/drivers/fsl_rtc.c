@@ -298,6 +298,7 @@ status_t RTC_SetDatetime(RTC_Type *base, const rtc_datetime_t *datetime)
     }
 
     /* Set time in seconds */
+    base->TPR = 0U;
     base->TSR = RTC_ConvertDatetimeToSeconds(datetime);
 
     return kStatus_Success;
@@ -312,16 +313,26 @@ status_t RTC_SetDatetime(RTC_Type *base, const rtc_datetime_t *datetime)
 void RTC_GetDatetime(RTC_Type *base, rtc_datetime_t *datetime)
 {
     assert(NULL != datetime);
-
+    // Prescaler
+    uint16_t tprValue = 0;
+    uint16_t tprValue2 = 0;
+    // Seconds counter
     uint32_t seconds = 0;
     uint32_t seconds2 = 0;
-
+    // Read prescaler first since it is faster
+    do {
+        tprValue = base->TPR;
+        tprValue2 = base->TPR;
+    } while (tprValue != tprValue2);
     do {
         seconds = base->TSR;
         seconds2 = base->TSR;
     } while (seconds != seconds2);
 
+    // Return result
     RTC_ConvertSecondsToDatetime(seconds, datetime);
+    uint16_t miliseconds = (uint16_t)((tprValue >> 5) & 0x3FF); // 10 bit number where 1 equals ~0.977ms
+    datetime->milisecond = (miliseconds > 999) ? 999 : miliseconds;
 }
 
 /*!

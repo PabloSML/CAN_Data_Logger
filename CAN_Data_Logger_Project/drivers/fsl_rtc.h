@@ -99,6 +99,7 @@ typedef struct _rtc_datetime
     uint8_t hour;   /*!< Range from 0 to 23.*/
     uint8_t minute; /*!< Range from 0 to 59.*/
     uint8_t second; /*!< Range from 0 to 59.*/
+    uint16_t milisecond; /*!< Range from 0 to 999.*/
 } rtc_datetime_t;
 
 #if (defined(FSL_FEATURE_RTC_HAS_PCR) && FSL_FEATURE_RTC_HAS_PCR)
