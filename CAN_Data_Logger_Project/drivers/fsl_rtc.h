@@ -55,6 +55,7 @@ typedef enum _rtc_status_flags
     kRTC_TimeInvalidFlag  = (1U << 0U), /*!< Time invalid flag */
     kRTC_TimeOverflowFlag = (1U << 1U), /*!< Time overflow flag */
     kRTC_AlarmFlag        = (1U << 2U), /*!< Alarm flag*/
+    kRTC_TimeCounterEnableFlag = (1U << 4U), /*!< Time counter enable flag */
 #if defined(FSL_FEATURE_RTC_HAS_MONOTONIC) && (FSL_FEATURE_RTC_HAS_MONOTONIC)
     kRTC_MonotonicOverflowFlag = (1U << 3U), /*!< Monotonic Overflow Flag */
 #endif                                       /* FSL_FEATURE_RTC_HAS_MONOTONIC */
@@ -98,6 +99,7 @@ typedef struct _rtc_datetime
     uint8_t hour;   /*!< Range from 0 to 23.*/
     uint8_t minute; /*!< Range from 0 to 59.*/
     uint8_t second; /*!< Range from 0 to 59.*/
+    uint16_t milisecond; /*!< Range from 0 to 999.*/
 } rtc_datetime_t;
 
 #if (defined(FSL_FEATURE_RTC_HAS_PCR) && FSL_FEATURE_RTC_HAS_PCR)

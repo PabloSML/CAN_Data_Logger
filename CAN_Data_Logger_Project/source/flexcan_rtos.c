@@ -11,6 +11,7 @@
 #include "fsl_debug_console.h"
 #include "clock_config.h"
 #include "board.h"
+#include "MK64F12.h"
 
 /*******************************************************************************
  * Definitions
@@ -105,7 +106,6 @@ void Init_FlexCAN(void)
     // flexcanConfig.enableListenOnlyMode = true;   // NO FUNCIONA (se puede arreglar quizas)
     // flexcanConfig.baudRate = 125000U;
     flexcanConfig.bitRate = 125000U;
-    // flexcanConfig.enableIndividMask = true;
 
 #if (defined(USE_IMPROVED_TIMING_CONFIG) && USE_IMPROVED_TIMING_CONFIG)
     flexcan_timing_config_t timing_config;
@@ -184,7 +184,7 @@ void FlexCanTask(void *pvParameters)
         if  (xSemaphoreTake(s_FlexCanSemaphore, portMAX_DELAY) == pdTRUE)
         {
             // Create a CAN message struct with the received data
-            can_msg.timestamp = rxFrame.timestamp;
+            RTC_GetDatetime(RTC, &can_msg.timestamp);
             can_msg.id = FLEXCAN_ID_INVERSE(rxFrame.id);
             can_msg.length = rxFrame.length;
             can_msg.data[0] = rxFrame.dataByte0;
