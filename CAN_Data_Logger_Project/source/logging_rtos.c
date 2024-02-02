@@ -11,7 +11,7 @@
 #include "fsl_sd_disk.h"
 #include "sdmmc_config.h"
 #include "diskio.h"
-#include "fsl_rtc.h"
+// #include "fsl_rtc.h"
 #include "limits.h"
 
 /*******************************************************************************
@@ -21,6 +21,7 @@
 #define DEMO_WRITE_TIMES 10U
 #define PRINT_CAN_MSG 0
 #define FIRST_MSG_LIGHT 0
+#define CREATE_DIR 1
 
 /*******************************************************************************
  * Prototypes
@@ -32,7 +33,7 @@ static status_t DEMO_MakeFileSystem(void);
  * Variables
  ******************************************************************************/
 
-static FIL g_fileObject1;  /* File object */
+static FIL g_fileObject;  /* File object */
 static FATFS g_fileSystem; /* File system object */
 /*! @brief SD card detect flag  */
 static volatile bool s_cardInserted     = false;
@@ -61,6 +62,56 @@ static void PrintCanMsg(can_msg_t* canMsg)
 }
 #endif
 
+int appendNumber(char* buffer, int bufferIndex, int number, int width, bool isHex) {
+    static char digits[] = "0123456789ABCDEF";
+    for (int i = width - 1; i >= 0; --i) {
+        int digit = number % (isHex ? 16 : 10);
+        buffer[bufferIndex + i] = digits[digit];
+        number /= (isHex ? 16 : 10);
+    }
+    return bufferIndex + width;
+}
+
+int writeDateToBuffer(char* buffer, int bufferIndex, rtc_datetime_t* date) {
+    bufferIndex = appendNumber(buffer, bufferIndex, date->year, 4, false);
+    buffer[bufferIndex++] = ',';
+    bufferIndex = appendNumber(buffer, bufferIndex, date->month, 2, false);
+    buffer[bufferIndex++] = ',';
+    bufferIndex = appendNumber(buffer, bufferIndex, date->day, 2, false);
+    buffer[bufferIndex++] = ',';
+    bufferIndex = appendNumber(buffer, bufferIndex, date->hour, 2, false);
+    buffer[bufferIndex++] = ',';
+    bufferIndex = appendNumber(buffer, bufferIndex, date->minute, 2, false);
+    buffer[bufferIndex++] = ',';
+    bufferIndex = appendNumber(buffer, bufferIndex, date->second, 2, false);
+    buffer[bufferIndex++] = ',';
+    bufferIndex = appendNumber(buffer, bufferIndex, date->milisecond, 3, false);
+    buffer[bufferIndex++] = ',';
+    return bufferIndex;
+}
+
+int writeCANMessageToBuffer(char* buffer, int bufferIndex, can_msg_t* canMsg) {
+    bufferIndex = appendNumber(buffer, bufferIndex, canMsg->id, 8, true);
+    buffer[bufferIndex++] = ',';
+    bufferIndex = appendNumber(buffer, bufferIndex, canMsg->length, 1, false);
+    buffer[bufferIndex++] = ',';
+    for (int i = 0; i < 8; ++i) {
+        bufferIndex = appendNumber(buffer, bufferIndex, canMsg->data[i], 2, true);
+        buffer[bufferIndex++] = ',';
+    }
+    buffer[bufferIndex++] = '\r';
+    buffer[bufferIndex++] = '\n';
+    return bufferIndex;
+}
+
+int writeToBuffer(char* buffer, int bufferIndex, can_msg_t* canMsg) {
+    bufferIndex = writeDateToBuffer(buffer, bufferIndex, &canMsg->timestamp);
+    bufferIndex = writeCANMessageToBuffer(buffer, bufferIndex, canMsg);
+    buffer[bufferIndex++] = '\0'; // Null terminate the string
+    return bufferIndex;
+}
+
+
 void FileAccessTask(void *pvParameters)
 {
     rtc_datetime_t date;
@@ -71,12 +122,15 @@ void FileAccessTask(void *pvParameters)
     xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
 
     // Initialize File
-    error = f_open(&g_fileObject1, _T("/dir_1/magic.csv"), FA_WRITE | FA_OPEN_APPEND);
+    char fileName[25];
+    RTC_GetDatetime(RTC, &date);
+    sprintf(fileName, "logs/%02d_%02d_%02d/%02d_%02d_%02d.csv", (date.year)%100, date.month, date.day, date.hour, date.minute, date.second);
+    error = f_open(&g_fileObject, _T(fileName), FA_WRITE | FA_OPEN_APPEND);
     if (error)
     {
         if (error == FR_NO_FILE)
         {
-            error = f_open(&g_fileObject1, _T("/dir_1/magic.csv"), FA_WRITE | FA_CREATE_NEW);
+            error = f_open(&g_fileObject, _T(fileName), FA_WRITE | FA_CREATE_NEW);
             if (error)
             {
                 BOARD_WriteLEDs(true, false, false);
@@ -93,8 +147,8 @@ void FileAccessTask(void *pvParameters)
     }
 
     // Write header to the file
-    char s_buffer0[] = "Year,Month,Day,Hour,Minute,Second,CAN Timestamp,ID,Data Length,B0,B1,B2,B3,B4,B5,B6,B7\r\n";
-    error = f_write(&g_fileObject1, s_buffer0, sizeof(s_buffer0) - 1, &bytesWritten);
+    char s_buffer0[] = "Year,Month,Day,Hour,Minute,Second,Milisecond,ID,Data Length,B0,B1,B2,B3,B4,B5,B6,B7\r\n";
+    error = f_write(&g_fileObject, s_buffer0, sizeof(s_buffer0) - 1, &bytesWritten);
     if (error || (bytesWritten != sizeof(s_buffer0) - 1))
     {
         // Handle error
@@ -121,8 +175,6 @@ void FileAccessTask(void *pvParameters)
     {
         if (xQueueReceive(canMsgQueue, &canMsg, portMAX_DELAY) == pdTRUE)   // Suspende la tarea hasta que haya un mensaje en la cola
         {
-            /* Get date time */
-            RTC_GetDatetime(RTC, &date);
 #if FIRST_MSG_LIGHT
             if (firstTime)
             {
@@ -139,28 +191,11 @@ void FileAccessTask(void *pvParameters)
             PRINTF("No pude encontrar los datos en la queue :(\r\n");
         }
 
-        // Process the message...
-        int len = snprintf(buffer + bufferIndex, sizeof(buffer) - bufferIndex, 
-            "%04hd,%02hd,%02hd,%02hd,%02hd,%02hd,%d,%08x,%d,%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x\r\n",
-            date.year, date.month, date.day, date.hour, date.minute, date.second, canMsg.timestamp, canMsg.id, canMsg.length,
-            canMsg.data[0], canMsg.data[1], canMsg.data[2], canMsg.data[3], canMsg.data[4], canMsg.data[5], canMsg.data[6], canMsg.data[7]
-        );
-
-        if (len > 0)
-        {
-            bufferIndex += len;
-        }
+        bufferIndex = writeToBuffer(buffer, bufferIndex, &canMsg);
 
         if (bufferIndex >= bufferWriteThreshold) // Threshold to write, adjust as needed
         {
-            // CHECK IF NECESSARY
-            // /* write append */
-            // if (f_lseek(&g_fileObject1, g_fileObject1.obj.objsize) != FR_OK)
-            // {
-            //     PRINTF("lseek file failed.\r\n");
-            //     break;
-            // }
-            error = f_write(&g_fileObject1, buffer, bufferIndex, &bytesWritten);
+            error = f_write(&g_fileObject, buffer, bufferIndex, &bytesWritten);
             if (error || (bytesWritten != bufferIndex))
             {
                 PRINTF("Write file failed with error code %d.\r\n", error);
@@ -168,7 +203,6 @@ void FileAccessTask(void *pvParameters)
                 CloseLoggingFile();
                 break;
             }
-            // f_sync(&g_fileObject1);
             bufferIndex = 0; // Reset buffer index after writing
 
             if (++writeTimes >= DEMO_WRITE_TIMES)
@@ -187,7 +221,7 @@ void FileAccessTask(void *pvParameters)
 
 void CloseLoggingFile(void)
 {
-    f_close(&g_fileObject1);
+    f_close(&g_fileObject);
 }
 
 static void SDCARD_DetectCallBack(bool isInserted, void *userData)
@@ -286,24 +320,28 @@ static status_t DEMO_MakeFileSystem(void)
 #endif /* FF_USE_MKFS */
 
 #if CREATE_DIR
-    PRINTF("\r\nCreate directory......\r\n");
-    error = f_mkdir(_T("/dir_1"));
+    // PRINTF("\r\nCreate directory......\r\n");
+    rtc_datetime_t date;
+    RTC_GetDatetime(RTC, &date);
+    char folderName[15];
+    sprintf(folderName, "/logs/%02d_%02d_%02d", (date.year)%100, date.month, date.day);
+    error = f_mkdir(_T(folderName));
     if (error)
     {
         if (error == FR_EXIST)
         {
-            PRINTF("Directory exists.\r\n");
+            // PRINTF("Directory exists.\r\n");
         }
         else
         {
-            PRINTF("Make directory failed.\r\n");
-            GPIO_PinWrite(BOARD_LED_RED_GPIO, BOARD_LED_RED_PIN, LOGIC_LED_ON);
+            // PRINTF("Make directory failed.\r\n");
+            BOARD_WriteLEDs(true, false, false);
             return kStatus_Fail;
         }
     }
     else
     {
-        PRINTF("\r\nDirectory created.\r\n");
+        // PRINTF("\r\nDirectory created.\r\n");
     }
 #endif
 

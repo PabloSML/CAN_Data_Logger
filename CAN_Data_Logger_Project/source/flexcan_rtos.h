@@ -15,6 +15,7 @@
 #include "semphr.h"
 #include "task.h"
 #include "queue.h"
+#include "rtc_rtos.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -35,7 +36,7 @@
     ack: CAN message ACK
 */
 typedef struct {
-  uint32_t timestamp;
+  rtc_datetime_t timestamp;
   uint32_t id;
   uint8_t length;
   uint8_t data[8];

@@ -106,7 +106,7 @@ int main(void) {
 
     PRINTF("CAN EXISTS.\n");
 
-    if (GPIO_PinRead(BOARD_MODE_GPIO, BOARD_MODE_PIN) == LOGIC_SW_PRESSED)
+    if (GPIO_PinRead(BOARD_MODE_GPIO, BOARD_MODE_PIN) == 0)
     {
         op_mode = DRIVE_MODE;
     }
@@ -129,6 +129,7 @@ int main(void) {
     }
     else if (op_mode == DRIVE_MODE)
     {
+        Init_RTC(false);
         Init_Drive();
 
         xTaskCreate(DriveTask, (char const *)"DriveTask", DRIVE_TASK_STACK_SIZE, &g_msc, DRIVE_TASK_PRIORITY, &g_msc.application_task_handle);
