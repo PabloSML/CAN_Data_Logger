@@ -35,14 +35,13 @@
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
-void Init_CardDetect(TaskHandle_t* handle);
+void Init_Logging(TaskHandle_t* handle);
+void StopLogging(void);
 /*
 * @brief complete documentation for this function :)
 */
 void CardDetectTask(void *pvParameters);
 void FileAccessTask(void *pvParameters);
-void CloseLoggingFile(void);
-
 
 /*******************************************************************************
  ******************************************************************************/

@@ -38,21 +38,20 @@
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-volatile bool txComplete = false;
-volatile bool rxComplete = false;
-flexcan_handle_t flexcanHandle;
-flexcan_mb_transfer_t txXfer, rxXfer;
-flexcan_fifo_transfer_t rxFifoXfer;
+static flexcan_handle_t flexcanHandle;
+static bool flexcan_init = false;
+static flexcan_fifo_transfer_t rxFifoXfer;
 #if (defined(USE_CANFD) && USE_CANFD)
-flexcan_fd_frame_t txFrame, rxFrame;
+static flexcan_fd_frame_t rxFrame;
 #else
-flexcan_frame_t txFrame, rxFrame;
+static flexcan_frame_t rxFrame;
 #endif
 
 static StaticQueue_t s_CanQueue;
 static uint8_t s_CanQueueStorage[CAN_QUEUE_LENGTH * CAN_QUEUE_ITEM_SIZE];
 static QueueHandle_t s_CanQueueHandle = NULL;
 
+static TaskHandle_t* flexCanTaskHandle;
 static SemaphoreHandle_t s_FlexCanSemaphore = NULL;
 static SemaphoreHandle_t s_CanMsgSemaphore = NULL;
 
@@ -75,11 +74,21 @@ static FLEXCAN_CALLBACK(flexcan_callback)
     }
 }
 
+void StopFlexCAN(void)
+{
+    if (flexcan_init)
+    {
+        vTaskSuspend(*flexCanTaskHandle);
+        flexcan_init = false;
+    }
+}
+
 /*!
  * @brief Initialize the FlexCAN
  */
-void Init_FlexCAN(void)
+void Init_FlexCAN(TaskHandle_t* handle)
 {
+    flexCanTaskHandle = handle;
     flexcan_config_t flexcanConfig;
     flexcan_rx_fifo_config_t rxFifoConfig;
 
@@ -164,6 +173,7 @@ void Init_FlexCAN(void)
     s_CanMsgSemaphore = xSemaphoreCreateBinary();
 
     s_CanQueueHandle = xQueueCreateStatic(CAN_QUEUE_LENGTH, CAN_QUEUE_ITEM_SIZE, s_CanQueueStorage, &s_CanQueue);
+    flexcan_init = true;
 }
 
 QueueHandle_t getCanMsgQueue(void){

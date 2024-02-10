@@ -20,12 +20,13 @@
 
 #define DEMO_WRITE_TIMES 10U
 #define PRINT_CAN_MSG 0
-#define FIRST_MSG_LIGHT 0
+#define FIRST_MSG_LIGHT 1
 #define CREATE_DIR 1
 
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
+
 static void SDCARD_DetectCallBack(bool isInserted, void *userData);
 static status_t DEMO_MakeFileSystem(void);
 
@@ -33,6 +34,9 @@ static status_t DEMO_MakeFileSystem(void);
  * Variables
  ******************************************************************************/
 
+static bool fileOpen = false;
+static bool sdHostInit = false;
+static bool sdCardInit = false;
 static FIL g_fileObject;  /* File object */
 static FATFS g_fileSystem; /* File system object */
 /*! @brief SD card detect flag  */
@@ -41,6 +45,13 @@ static volatile bool s_cardInsertStatus = false;
 /*! @brief Card semaphore  */
 static SemaphoreHandle_t s_CardDetectSemaphore = NULL;
 static TaskHandle_t* fileAccessTaskHandle;
+
+// Buffer initialization
+static char buffer[1024] = {0};
+static uint16_t bufferSize;
+static uint16_t bufferWriteThreshold;
+static size_t bufferIndex = 0;
+static UINT bytesWritten   = 0U;
 
 /*******************************************************************************
  * Code
@@ -62,7 +73,7 @@ static void PrintCanMsg(can_msg_t* canMsg)
 }
 #endif
 
-int appendNumber(char* buffer, int bufferIndex, int number, int width, bool isHex) {
+static int appendNumber(char* buffer, int bufferIndex, int number, int width, bool isHex) {
     static char digits[] = "0123456789ABCDEF";
     for (int i = width - 1; i >= 0; --i) {
         int digit = number % (isHex ? 16 : 10);
@@ -72,7 +83,7 @@ int appendNumber(char* buffer, int bufferIndex, int number, int width, bool isHe
     return bufferIndex + width;
 }
 
-int writeDateToBuffer(char* buffer, int bufferIndex, rtc_datetime_t* date) {
+static int writeDateToBuffer(char* buffer, int bufferIndex, rtc_datetime_t* date) {
     bufferIndex = appendNumber(buffer, bufferIndex, date->year, 4, false);
     buffer[bufferIndex++] = ',';
     bufferIndex = appendNumber(buffer, bufferIndex, date->month, 2, false);
@@ -90,7 +101,7 @@ int writeDateToBuffer(char* buffer, int bufferIndex, rtc_datetime_t* date) {
     return bufferIndex;
 }
 
-int writeCANMessageToBuffer(char* buffer, int bufferIndex, can_msg_t* canMsg) {
+static int writeCANMessageToBuffer(char* buffer, int bufferIndex, can_msg_t* canMsg) {
     bufferIndex = appendNumber(buffer, bufferIndex, canMsg->id, 8, true);
     buffer[bufferIndex++] = ',';
     bufferIndex = appendNumber(buffer, bufferIndex, canMsg->length, 1, false);
@@ -104,25 +115,64 @@ int writeCANMessageToBuffer(char* buffer, int bufferIndex, can_msg_t* canMsg) {
     return bufferIndex;
 }
 
-int writeToBuffer(char* buffer, int bufferIndex, can_msg_t* canMsg) {
+static int writeToBuffer(char* buffer, int bufferIndex, can_msg_t* canMsg) {
     bufferIndex = writeDateToBuffer(buffer, bufferIndex, &canMsg->timestamp);
     bufferIndex = writeCANMessageToBuffer(buffer, bufferIndex, canMsg);
     buffer[bufferIndex++] = '\0'; // Null terminate the string
     return bufferIndex;
 }
 
+static void CloseLoggingFile(void)
+{
+    if (fileOpen)
+    {
+        if (bufferIndex > 0)
+            f_write(&g_fileObject, buffer, bufferIndex, &bytesWritten);
+        f_close(&g_fileObject);
+        fileOpen = false;
+    }
+}
+
+static void ShutdownSDCard(void)
+{
+    if (sdCardInit)
+    {
+        SD_SetCardPower(&g_sd, false);
+        sdCardInit = false;
+    }
+    if (sdHostInit)
+    {
+        SD_HostDeinit(&g_sd);
+        sdHostInit = false;
+    }
+}
+
+void Init_Logging(TaskHandle_t* handle)
+{
+    fileAccessTaskHandle = handle;
+}
+
+void StopLogging(void)
+{
+    if (fileOpen)
+    {
+        vTaskSuspend(*fileAccessTaskHandle);
+    }
+    CloseLoggingFile();
+    ShutdownSDCard();
+}
 
 void FileAccessTask(void *pvParameters)
 {
     rtc_datetime_t date;
-    UINT bytesWritten   = 0U;
+    // UINT bytesWritten   = 0U;
     uint32_t writeTimes = 0U;
     FRESULT error;
 
     xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
 
     // Initialize File
-    char fileName[25];
+    char fileName[30];
     RTC_GetDatetime(RTC, &date);
     sprintf(fileName, "logs/%02d_%02d_%02d/%02d_%02d_%02d.csv", (date.year)%100, date.month, date.day, date.hour, date.minute, date.second);
     error = f_open(&g_fileObject, _T(fileName), FA_WRITE | FA_OPEN_APPEND);
@@ -145,6 +195,7 @@ void FileAccessTask(void *pvParameters)
             return;
         }
     }
+    fileOpen = true;
 
     // Write header to the file
     char s_buffer0[] = "Year,Month,Day,Hour,Minute,Second,Milisecond,ID,Data Length,B0,B1,B2,B3,B4,B5,B6,B7\r\n";
@@ -165,11 +216,8 @@ void FileAccessTask(void *pvParameters)
     // CAN message initialization
     QueueHandle_t canMsgQueue = getCanMsgQueue();
     can_msg_t canMsg;
-    // Buffer initialization
-    char buffer[1024] = {0};
-    uint16_t bufferSize = sizeof(buffer);
-    uint16_t bufferWriteThreshold = bufferSize - 50;
-    size_t bufferIndex = 0;
+    bufferSize = sizeof(buffer);
+    bufferWriteThreshold = bufferSize - 50;
 
     while (1)
     {
@@ -191,6 +239,8 @@ void FileAccessTask(void *pvParameters)
             PRINTF("No pude encontrar los datos en la queue :(\r\n");
         }
 
+        // if (writeTimes < DEMO_WRITE_TIMES)
+        // {
         bufferIndex = writeToBuffer(buffer, bufferIndex, &canMsg);
 
         if (bufferIndex >= bufferWriteThreshold) // Threshold to write, adjust as needed
@@ -205,34 +255,24 @@ void FileAccessTask(void *pvParameters)
             }
             bufferIndex = 0; // Reset buffer index after writing
 
-            if (++writeTimes >= DEMO_WRITE_TIMES)
+            if (++writeTimes == DEMO_WRITE_TIMES)
             {
-                PRINTF("TASK: finished.\r\n");
+                // PRINTF("TASK: finished.\r\n");
+                // CloseLoggingFile();
                 BOARD_WriteLEDs(false, true, false);
-                CloseLoggingFile();
-                xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
-                break;
+                // xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
+                // break;
             }
         }
+        // }
     }
-
     vTaskSuspend(NULL);
-}
-
-void CloseLoggingFile(void)
-{
-    f_close(&g_fileObject);
 }
 
 static void SDCARD_DetectCallBack(bool isInserted, void *userData)
 {
     s_cardInsertStatus = isInserted;
     xSemaphoreGiveFromISR(s_CardDetectSemaphore, NULL);
-}
-
-void Init_CardDetect(TaskHandle_t* handle)
-{
-    fileAccessTaskHandle = handle;
 }
 
 void CardDetectTask(void *pvParameters)
@@ -244,6 +284,7 @@ void CardDetectTask(void *pvParameters)
     /* SD host init function */
     if (SD_HostInit(&g_sd) == kStatus_Success)
     {
+        sdHostInit = true;
         PRINTF("\r\nPlease insert a card into board.\r\n");
         while (true)
         {
@@ -257,6 +298,7 @@ void CardDetectTask(void *pvParameters)
                     if (s_cardInserted)
                     {
                         PRINTF("\r\nCard inserted.\r\n");
+                        sdCardInit = true;
                         /* power off card */
                         SD_SetCardPower(&g_sd, false);
                         /* power on the card */
@@ -334,7 +376,7 @@ static status_t DEMO_MakeFileSystem(void)
         }
         else
         {
-            // PRINTF("Make directory failed.\r\n");
+            PRINTF("Make directory failed.\r\n");
             BOARD_WriteLEDs(true, false, false);
             return kStatus_Fail;
         }
