@@ -102,12 +102,15 @@ static int writeDateToBuffer(char* buffer, int bufferIndex, rtc_datetime_t* date
 }
 
 static int writeCANMessageToBuffer(char* buffer, int bufferIndex, can_msg_t* canMsg) {
-    bufferIndex = appendNumber(buffer, bufferIndex, canMsg->id, 8, true);
+    bufferIndex = appendNumber(buffer, bufferIndex, canMsg->id, 3, true);
     buffer[bufferIndex++] = ',';
     bufferIndex = appendNumber(buffer, bufferIndex, canMsg->length, 1, false);
     buffer[bufferIndex++] = ',';
     for (int i = 0; i < 8; ++i) {
-        bufferIndex = appendNumber(buffer, bufferIndex, canMsg->data[i], 2, true);
+        if (8-i <= canMsg->length)
+            bufferIndex = appendNumber(buffer, bufferIndex, canMsg->data[i], 2, true);
+        else
+            bufferIndex = appendNumber(buffer, bufferIndex, 0, 2, true);
         buffer[bufferIndex++] = ',';
     }
     buffer[bufferIndex++] = '\r';
@@ -118,7 +121,6 @@ static int writeCANMessageToBuffer(char* buffer, int bufferIndex, can_msg_t* can
 static int writeToBuffer(char* buffer, int bufferIndex, can_msg_t* canMsg) {
     bufferIndex = writeDateToBuffer(buffer, bufferIndex, &canMsg->timestamp);
     bufferIndex = writeCANMessageToBuffer(buffer, bufferIndex, canMsg);
-    buffer[bufferIndex++] = '\0'; // Null terminate the string
     return bufferIndex;
 }
 
@@ -198,7 +200,7 @@ void FileAccessTask(void *pvParameters)
     fileOpen = true;
 
     // Write header to the file
-    char s_buffer0[] = "Year,Month,Day,Hour,Minute,Second,Milisecond,ID,Data Length,B0,B1,B2,B3,B4,B5,B6,B7\r\n";
+    char s_buffer0[] = "Year,Month,Day,Hour,Minute,Second,Milisecond,ID,Data Length,B7,B6,B5,B4,B3,B2,B1,B0\r\n";
     error = f_write(&g_fileObject, s_buffer0, sizeof(s_buffer0) - 1, &bytesWritten);
     if (error || (bytesWritten != sizeof(s_buffer0) - 1))
     {

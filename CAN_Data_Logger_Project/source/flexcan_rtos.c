@@ -197,14 +197,14 @@ void FlexCanTask(void *pvParameters)
             RTC_GetDatetime(RTC, &can_msg.timestamp);
             can_msg.id = FLEXCAN_ID_INVERSE(rxFrame.id);
             can_msg.length = rxFrame.length;
-            can_msg.data[0] = rxFrame.dataByte0;
-            can_msg.data[1] = rxFrame.dataByte1;
-            can_msg.data[2] = rxFrame.dataByte2;
-            can_msg.data[3] = rxFrame.dataByte3;
-            can_msg.data[4] = rxFrame.dataByte4;
-            can_msg.data[5] = rxFrame.dataByte5;
-            can_msg.data[6] = rxFrame.dataByte6;
-            can_msg.data[7] = rxFrame.dataByte7;
+            can_msg.data[0] = rxFrame.dataByte7;
+            can_msg.data[1] = rxFrame.dataByte6;
+            can_msg.data[2] = rxFrame.dataByte5;
+            can_msg.data[3] = rxFrame.dataByte4;
+            can_msg.data[4] = rxFrame.dataByte3;
+            can_msg.data[5] = rxFrame.dataByte2;
+            can_msg.data[6] = rxFrame.dataByte1;
+            can_msg.data[7] = rxFrame.dataByte0;
 
             // Send the CAN message struct to the CAN message queue
             xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
