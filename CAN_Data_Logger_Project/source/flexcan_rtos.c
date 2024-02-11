@@ -9,17 +9,22 @@
 #include "flexcan_rtos.h"
 #include "fsl_flexcan.h"
 #include "fsl_debug_console.h"
-#include "clock_config.h"
+#include "board_select.h"
+#if BOARD == CANDLE
+#include "clock_config_candle.h"
+#elif BOARD == FRDM
+#include "clock_config_frdm.h"
+#endif
 #include "board.h"
 #include "MK64F12.h"
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define EXAMPLE_CAN            CAN0
-#define EXAMPLE_CAN_CLK_SOURCE (kFLEXCAN_ClkSrc1)
-// #define EXAMPLE_CAN_CLK_FREQ   CLOCK_GetFreq(kCLOCK_BusClk)
-#define EXAMPLE_CAN_CLK_FREQ   60000000   
+#define CAN_BASE            CAN0
+#define CAN_CLK_SOURCE (kFLEXCAN_ClkSrc1)
+// #define CAN_CLK_FREQ   CLOCK_GetFreq(kCLOCK_BusClk)
+#define CAN_CLK_FREQ   60000000   
 /* Set USE_IMPROVED_TIMING_CONFIG macro to use api to calculates the improved CAN / CAN FD timing values. */
 #define USE_IMPROVED_TIMING_CONFIG (1U)
 #define RX_MESSAGE_BUFFER_NUM      (9)
@@ -107,8 +112,8 @@ void Init_FlexCAN(TaskHandle_t* handle)
      */
     FLEXCAN_GetDefaultConfig(&flexcanConfig);
 
-#if defined(EXAMPLE_CAN_CLK_SOURCE)
-    flexcanConfig.clkSrc = EXAMPLE_CAN_CLK_SOURCE;
+#if defined(CAN_CLK_SOURCE)
+    flexcanConfig.clkSrc = CAN_CLK_SOURCE;
 #endif
 
     flexcanConfig.enableLoopBack = false;
@@ -120,8 +125,8 @@ void Init_FlexCAN(TaskHandle_t* handle)
     flexcan_timing_config_t timing_config;
     memset(&timing_config, 0, sizeof(flexcan_timing_config_t));
 #if (defined(USE_CANFD) && USE_CANFD)
-    if (FLEXCAN_FDCalculateImprovedTimingValues(EXAMPLE_CAN, flexcanConfig.baudRate, flexcanConfig.baudRateFD,
-                                                EXAMPLE_CAN_CLK_FREQ, &timing_config))
+    if (FLEXCAN_FDCalculateImprovedTimingValues(CAN_BASE, flexcanConfig.baudRate, flexcanConfig.baudRateFD,
+                                                CAN_CLK_FREQ, &timing_config))
     {
         /* Update the improved timing configuration*/
         memcpy(&(flexcanConfig.timingConfig), &timing_config, sizeof(flexcan_timing_config_t));
@@ -131,7 +136,7 @@ void Init_FlexCAN(TaskHandle_t* handle)
         LOG_INFO("No found Improved Timing Configuration. Just used default configuration\r\n\r\n");
     }
 #else
-    if (FLEXCAN_CalculateImprovedTimingValues(EXAMPLE_CAN, flexcanConfig.baudRate, EXAMPLE_CAN_CLK_FREQ,
+    if (FLEXCAN_CalculateImprovedTimingValues(CAN_BASE, flexcanConfig.baudRate, CAN_CLK_FREQ,
                                               &timing_config))
     {
         /* Update the improved timing configuration*/
@@ -145,18 +150,18 @@ void Init_FlexCAN(TaskHandle_t* handle)
 #endif
 
 #if (defined(USE_CANFD) && USE_CANFD)
-    FLEXCAN_FDInit(EXAMPLE_CAN, &flexcanConfig, EXAMPLE_CAN_CLK_FREQ, BYTES_IN_MB, true);
+    FLEXCAN_FDInit(CAN_BASE, &flexcanConfig, CAN_CLK_FREQ, BYTES_IN_MB, true);
 #else
-    FLEXCAN_Init(EXAMPLE_CAN, &flexcanConfig, EXAMPLE_CAN_CLK_FREQ);
+    FLEXCAN_Init(CAN_BASE, &flexcanConfig, CAN_CLK_FREQ);
 #endif
 
     /* Setup Rx FIFO */
-    FLEXCAN_SetRxFifoGlobalMask(EXAMPLE_CAN, 0);    /* Set Rx FIFO global mask to receive all frames. */
+    FLEXCAN_SetRxFifoGlobalMask(CAN_BASE, 0);    /* Set Rx FIFO global mask to receive all frames. */
     rxFifoConfig.idFilterTable = (uint32_t*)(CAN0_BASE + 0xE0u);
     rxFifoConfig.idFilterNum  = 0;
     rxFifoConfig.idFilterType = kFLEXCAN_RxFifoFilterTypeA;
     rxFifoConfig.priority     = kFLEXCAN_RxFifoPrioHigh;
-    FLEXCAN_SetRxFifoConfig(EXAMPLE_CAN, &rxFifoConfig, true);
+    FLEXCAN_SetRxFifoConfig(CAN_BASE, &rxFifoConfig, true);
 
     /* set IRQ priority */
     NVIC_SetPriority(CAN0_ORed_Message_buffer_IRQn, 5);
@@ -167,7 +172,7 @@ void Init_FlexCAN(TaskHandle_t* handle)
     NVIC_SetPriority(CAN0_Wake_Up_IRQn, 5);
 
     /* Create FlexCAN handle structure and set call back function. */
-    FLEXCAN_TransferCreateHandle(EXAMPLE_CAN, &flexcanHandle, flexcan_callback, NULL);
+    FLEXCAN_TransferCreateHandle(CAN_BASE, &flexcanHandle, flexcan_callback, NULL);
     
     s_FlexCanSemaphore = xSemaphoreCreateBinary();
     s_CanMsgSemaphore = xSemaphoreCreateBinary();
@@ -188,7 +193,7 @@ void FlexCanTask(void *pvParameters)
     {
         /* Start receive data through Rx Fifo */
         rxFifoXfer.frame = &rxFrame;
-        (void)FLEXCAN_TransferReceiveFifoNonBlocking(EXAMPLE_CAN, &flexcanHandle, &rxFifoXfer);
+        (void)FLEXCAN_TransferReceiveFifoNonBlocking(CAN_BASE, &flexcanHandle, &rxFifoXfer);
 
         /* Waiting for Rx Message finish. */
         if  (xSemaphoreTake(s_FlexCanSemaphore, portMAX_DELAY) == pdTRUE)

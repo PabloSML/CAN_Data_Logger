@@ -185,15 +185,23 @@ void FileAccessTask(void *pvParameters)
             error = f_open(&g_fileObject, _T(fileName), FA_WRITE | FA_CREATE_NEW);
             if (error)
             {
+#if BOARD == CANDLE
+                BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
                 BOARD_WriteLEDs(true, false, false);
                 PRINTF("Create file failed with error code %d.\r\n", error);
+#endif
                 return;
             }
         }
         else
         {
+#if BOARD == CANDLE
+            BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
             BOARD_WriteLEDs(true, false, false);
             PRINTF("Open file failed with error code %d.\r\n", error);
+#endif
             return;
         }
     }
@@ -205,12 +213,21 @@ void FileAccessTask(void *pvParameters)
     if (error || (bytesWritten != sizeof(s_buffer0) - 1))
     {
         // Handle error
+#if BOARD == CANDLE
+        BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
         BOARD_WriteLEDs(true, false, false);
         PRINTF("Write file header failed with error code %d.\r\n", error);
+#endif
         CloseLoggingFile();
         return; // Exit the task if header can't be written
     }
+
+#if BOARD == CANDLE
+    BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
     BOARD_WriteLEDs(true, true, false);
+#endif
 
 #if FIRST_MSG_LIGHT
     bool firstTime = true;
@@ -228,7 +245,11 @@ void FileAccessTask(void *pvParameters)
 #if FIRST_MSG_LIGHT
             if (firstTime)
             {
+#if BOARD == CANDLE
+                BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
                 BOARD_WriteLEDs(false, true, true);
+#endif
                 firstTime = false;
             }
 #endif
@@ -250,8 +271,12 @@ void FileAccessTask(void *pvParameters)
             error = f_write(&g_fileObject, buffer, bufferIndex, &bytesWritten);
             if (error || (bytesWritten != bufferIndex))
             {
+#if BOARD == CANDLE
+                BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
                 PRINTF("Write file failed with error code %d.\r\n", error);
                 BOARD_WriteLEDs(true, false, false);
+#endif
                 CloseLoggingFile();
                 break;
             }
@@ -261,7 +286,11 @@ void FileAccessTask(void *pvParameters)
             {
                 // PRINTF("TASK: finished.\r\n");
                 // CloseLoggingFile();
+#if BOARD == CANDLE
+                BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
                 BOARD_WriteLEDs(false, true, false);
+#endif
                 // xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
                 // break;
             }
@@ -310,8 +339,12 @@ void CardDetectTask(void *pvParameters)
                         {
                             continue;
                         }
+#if BOARD == CANDLE
+                        BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
                         PRINTF("\r\nFile system ready.\r\n");
                         BOARD_WriteLEDs(false, false, true);
+#endif
                         xTaskNotifyGive(*fileAccessTaskHandle);
                     }
                 }
@@ -378,8 +411,12 @@ static status_t DEMO_MakeFileSystem(void)
         }
         else
         {
+#if BOARD == CANDLE
+            BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
             PRINTF("Make directory failed.\r\n");
             BOARD_WriteLEDs(true, false, false);
+#endif
             return kStatus_Fail;
         }
     }

@@ -7,12 +7,24 @@
  */
 
 #include "board.h"
-#include <stdint.h>
 #include "fsl_common.h"
 #include "fsl_debug_console.h"
 #if defined(SDK_I2C_BASED_COMPONENT_USED) && SDK_I2C_BASED_COMPONENT_USED
 #include "fsl_i2c.h"
 #endif /* SDK_I2C_BASED_COMPONENT_USED */
+
+#if BOARD == CANDLE
+void BOARD_WriteLEDs(uint8_t val)
+{
+    GPIO_PinWrite(BOARD_LED_GPIO, BOARD_LED_2_PIN, val & 0b100);
+    GPIO_PinWrite(BOARD_LED_GPIO, BOARD_LED_1_PIN, val & 0b010);
+    GPIO_PinWrite(BOARD_LED_GPIO, BOARD_LED_0_PIN, val & 0b001);
+}
+void BOARD_WriteLED(uint32_t led_pin, uint8_t level)
+{
+    GPIO_PinWrite(BOARD_LED_GPIO, led_pin, level);
+}
+#elif BOARD == FRDM
 /* Initialize debug console. */
 void BOARD_InitDebugConsole(void)
 {
@@ -25,6 +37,8 @@ void BOARD_WriteLEDs(bool red, bool green, bool blue)
     GPIO_PinWrite(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_GPIO_PIN, green ? LOGIC_LED_ON : LOGIC_LED_OFF);
     GPIO_PinWrite(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_GPIO_PIN, blue ? LOGIC_LED_ON : LOGIC_LED_OFF);
 }
+#endif /* BOARD == FRDM */
+
 #if defined(SDK_I2C_BASED_COMPONENT_USED) && SDK_I2C_BASED_COMPONENT_USED
 void BOARD_I2C_Init(I2C_Type *base, uint32_t clkSrc_Hz)
 {

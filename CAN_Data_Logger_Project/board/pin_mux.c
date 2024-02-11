@@ -124,6 +124,8 @@ pin_labels:
 #include "fsl_port.h"
 #include "fsl_gpio.h"
 #include "pin_mux.h"
+#include "board.h"
+#include "MK64F12.h"
 
 /* FUNCTION ************************************************************************************************************
  *
@@ -134,7 +136,9 @@ pin_labels:
 void BOARD_InitBootPins(void)
 {
     BOARD_InitPins();
+#if BOARD == FRDM
     BOARD_InitDEBUG_UARTPins();
+#endif
 }
 
 /* clang-format off */
@@ -156,16 +160,40 @@ BOARD_InitPins:
  * END ****************************************************************************************************************/
 void BOARD_InitPins(void)
 {
-    /* Port A Clock Gate Control: Clock enabled */
-    CLOCK_EnableClock(kCLOCK_PortA);
+    // /* Port A Clock Gate Control: Clock enabled */
+    // CLOCK_EnableClock(kCLOCK_PortA);
 
-    /* Port D Clock Gate Control: Clock enabled */
-    CLOCK_EnableClock(kCLOCK_PortD);
+    // /* Port D Clock Gate Control: Clock enabled */
+    // CLOCK_EnableClock(kCLOCK_PortD);
 
     // BOARD_InitButtonsPins();
+    BOARD_InitModePin();
     BOARD_InitLEDsPins();
     BOARD_InitSDHCPins();
-    BOARD_InitCANPins();
+    // BOARD_InitCANPins();
+
+    // /* PORTA2 (pin 36) is configured as TRACE_SWO */
+    // PORT_SetPinMux(PORTA, 2U, kPORT_MuxAlt7);
+
+    // PORTA->PCR[2] = ((PORTA->PCR[2] &
+    //                   /* Mask bits to zero which are setting */
+    //                   (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
+
+    //                  /* Pull Select: Internal pulldown resistor is enabled on the corresponding pin, if the
+    //                   * corresponding PE field is set. */
+    //                  | PORT_PCR_PS(kPORT_PullDown)
+
+    //                  /* Pull Enable: Internal pullup or pulldown resistor is not enabled on the corresponding pin. */
+    //                  | PORT_PCR_PE(kPORT_PullDisable)
+
+    //                  /* Drive Strength Enable: Low drive strength is configured on the corresponding pin, if pin
+    //                   * is configured as a digital output. */
+    //                  | PORT_PCR_DSE(kPORT_LowDriveStrength));
+}
+
+void BOARD_InitModePin(void)
+{
+    CLOCK_EnableClock(BOARD_MODE_CLK_GATE);
 
     gpio_pin_config_t mode_pin_config = {
         .pinDirection = kGPIO_DigitalInput,
@@ -188,26 +216,8 @@ void BOARD_InitPins(void)
                                    kPORT_MuxAsGpio,
                                    /* Pin Control Register fields [15:0] are not locked */
                                    kPORT_UnlockRegister};
-    /* PORTD1 is configured as PTD1 */
+
     PORT_SetPinConfig(BOARD_MODE_PORT, BOARD_MODE_PIN, &mode_pin);
-
-    // /* PORTA2 (pin 36) is configured as TRACE_SWO */
-    // PORT_SetPinMux(PORTA, 2U, kPORT_MuxAlt7);
-
-    PORTA->PCR[2] = ((PORTA->PCR[2] &
-                      /* Mask bits to zero which are setting */
-                      (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_DSE_MASK | PORT_PCR_ISF_MASK)))
-
-                     /* Pull Select: Internal pulldown resistor is enabled on the corresponding pin, if the
-                      * corresponding PE field is set. */
-                     | PORT_PCR_PS(kPORT_PullDown)
-
-                     /* Pull Enable: Internal pullup or pulldown resistor is not enabled on the corresponding pin. */
-                     | PORT_PCR_PE(kPORT_PullDisable)
-
-                     /* Drive Strength Enable: Low drive strength is configured on the corresponding pin, if pin
-                      * is configured as a digital output. */
-                     | PORT_PCR_DSE(kPORT_LowDriveStrength));
 }
 
 /* FUNCTION ************************************************************************************************************
@@ -341,6 +351,36 @@ void BOARD_InitButtonsPins(void)
 }
 
 /* clang-format off */
+
+/**
+ * Initialize a GPIO pin as an LED output.
+ * 
+ * @param gpio The GPIO on which the LED is connected.
+ * @param port The PORT of the pin on which the LED is connected.
+ * @param pin The pin number on the GPIO port.
+ * @param outputLogic Initial logic level for the LED.
+ */
+void LED_Init(GPIO_Type *gpio, PORT_Type* port, uint32_t pin, uint8_t outputLogic) {
+    // GPIO configuration for LED
+    gpio_pin_config_t ledConfig = {
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = outputLogic
+    };
+    GPIO_PinInit(gpio, pin, &ledConfig);
+
+    // PORT configuration for LED
+    const port_pin_config_t portConfig = {
+        .pullSelect = kPORT_PullDisable,
+        .slewRate = kPORT_SlowSlewRate,
+        .passiveFilterEnable = kPORT_PassiveFilterDisable,
+        .openDrainEnable = kPORT_OpenDrainDisable,
+        .driveStrength = kPORT_LowDriveStrength,
+        .mux = kPORT_MuxAsGpio,
+        .lockRegister = kPORT_UnlockRegister
+    };
+    PORT_SetPinConfig(port, pin, &portConfig);
+}
+
 /*
  * TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 BOARD_InitLEDsPins:
@@ -364,82 +404,23 @@ BOARD_InitLEDsPins:
  * END ****************************************************************************************************************/
 void BOARD_InitLEDsPins(void)
 {
+#if BOARD == CANDLE
+    /* Port D Clock Gate Control: Clock enabled */
+    CLOCK_EnableClock(kCLOCK_PortD);
+
+    LED_Init(BOARD_LED_GPIO, BOARD_LED_PORT, BOARD_LED_0_PIN, LOGIC_LED_OFF);
+    LED_Init(BOARD_LED_GPIO, BOARD_LED_PORT, BOARD_LED_1_PIN, LOGIC_LED_OFF);
+    LED_Init(BOARD_LED_GPIO, BOARD_LED_PORT, BOARD_LED_2_PIN, LOGIC_LED_OFF);
+#elif BOARD == FRDM
     /* Port B Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortB);
     /* Port E Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortE);
 
-    gpio_pin_config_t LED_BLUE_config = {
-        .pinDirection = kGPIO_DigitalOutput,
-        .outputLogic = 1U
-    };
-    /* Initialize GPIO functionality on pin PTB21 (pin 67)  */
-    GPIO_PinInit(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_PIN, &LED_BLUE_config);
-
-    gpio_pin_config_t LED_RED_config = {
-        .pinDirection = kGPIO_DigitalOutput,
-        .outputLogic = 1U
-    };
-    /* Initialize GPIO functionality on pin PTB22 (pin 68)  */
-    GPIO_PinInit(BOARD_LED_RED_GPIO, BOARD_LED_RED_PIN, &LED_RED_config);
-
-    gpio_pin_config_t LED_GREEN_config = {
-        .pinDirection = kGPIO_DigitalOutput,
-        .outputLogic = 1U
-    };
-    /* Initialize GPIO functionality on pin PTE26 (pin 33)  */
-    GPIO_PinInit(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PIN, &LED_GREEN_config);
-
-    const port_pin_config_t LED_BLUE = {/* Internal pull-up/down resistor is disabled */
-                                        kPORT_PullDisable,
-                                        /* Slow slew rate is configured */
-                                        kPORT_SlowSlewRate,
-                                        /* Passive filter is disabled */
-                                        kPORT_PassiveFilterDisable,
-                                        /* Open drain is disabled */
-                                        kPORT_OpenDrainDisable,
-                                        /* Low drive strength is configured */
-                                        kPORT_LowDriveStrength,
-                                        /* Pin is configured as PTB21 */
-                                        kPORT_MuxAsGpio,
-                                        /* Pin Control Register fields [15:0] are not locked */
-                                        kPORT_UnlockRegister};
-    /* PORTB21 (pin 67) is configured as PTB21 */
-    PORT_SetPinConfig(BOARD_LED_BLUE_PORT, BOARD_LED_BLUE_PIN, &LED_BLUE);
-
-    const port_pin_config_t LED_RED = {/* Internal pull-up/down resistor is disabled */
-                                       kPORT_PullDisable,
-                                       /* Slow slew rate is configured */
-                                       kPORT_SlowSlewRate,
-                                       /* Passive filter is disabled */
-                                       kPORT_PassiveFilterDisable,
-                                       /* Open drain is disabled */
-                                       kPORT_OpenDrainDisable,
-                                       /* Low drive strength is configured */
-                                       kPORT_LowDriveStrength,
-                                       /* Pin is configured as PTB22 */
-                                       kPORT_MuxAsGpio,
-                                       /* Pin Control Register fields [15:0] are not locked */
-                                       kPORT_UnlockRegister};
-    /* PORTB22 (pin 68) is configured as PTB22 */
-    PORT_SetPinConfig(BOARD_LED_RED_PORT, BOARD_LED_RED_PIN, &LED_RED);
-
-    const port_pin_config_t LED_GREEN = {/* Internal pull-up/down resistor is disabled */
-                                         kPORT_PullDisable,
-                                         /* Slow slew rate is configured */
-                                         kPORT_SlowSlewRate,
-                                         /* Passive filter is disabled */
-                                         kPORT_PassiveFilterDisable,
-                                         /* Open drain is disabled */
-                                         kPORT_OpenDrainDisable,
-                                         /* Low drive strength is configured */
-                                         kPORT_LowDriveStrength,
-                                         /* Pin is configured as PTE26 */
-                                         kPORT_MuxAsGpio,
-                                         /* Pin Control Register fields [15:0] are not locked */
-                                         kPORT_UnlockRegister};
-    /* PORTE26 (pin 33) is configured as PTE26 */
-    PORT_SetPinConfig(BOARD_LED_GREEN_PORT, BOARD_LED_GREEN_PIN, &LED_GREEN);
+    LED_Init(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_PORT, BOARD_LED_BLUE_PIN, LOGIC_LED_OFF);
+    LED_Init(BOARD_LED_RED_GPIO, BOARD_LED_RED_PORT, BOARD_LED_RED_PIN, LOGIC_LED_OFF);
+    LED_Init(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_PORT, BOARD_LED_GREEN_PIN, LOGIC_LED_OFF);
+#endif
 }
 
 /* clang-format off */
@@ -909,8 +890,7 @@ void BOARD_InitSDHCPins(void)
     CLOCK_EnableClock(kCLOCK_PortE);
 
     gpio_pin_config_t SDHC_CD_config = {
-        .pinDirection = kGPIO_DigitalInput,
-        .outputLogic = 0U
+        .pinDirection = kGPIO_DigitalInput
     };
     /* Initialize GPIO functionality on pin PTE6 (pin 7)  */
     GPIO_PinInit(BOARD_SDHC_CD_GPIO, BOARD_SDHC_CD_PIN, &SDHC_CD_config);
@@ -1018,7 +998,7 @@ void BOARD_InitSDHCPins(void)
     PORT_SetPinConfig(BOARD_SDHC0_D2_PORT, BOARD_SDHC0_D2_PIN, &SDHC0_D2);
 
     const port_pin_config_t SDHC_CD = {/* Internal pull-down resistor is enabled */
-                                       kPORT_PullDown,
+                                       kPORT_PullUp,
                                        /* Slow slew rate is configured */
                                        kPORT_SlowSlewRate,
                                        /* Passive filter is disabled */

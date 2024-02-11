@@ -8,6 +8,7 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
+#include "board_select.h"
 #include "board.h"
 #include "MK64F12.h"
 #include "core_cm4.h"
@@ -97,8 +98,11 @@ void ShutdownTask(void *pvParameters)
             // Stop app tasks
             StopLogging();
             StopFlexCAN();
+#if BOARD == CANDLE
+            BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
             BOARD_WriteLEDs(true, true, true);
-
+#endif
             vTaskSuspend(NULL);
         }
     }
@@ -137,8 +141,12 @@ void Init_ADC(TaskHandle_t* handle)
     ADC16_Init(ADC16_BASE, &adcConfig);
     if (kStatus_Success != ADC16_DoAutoCalibration(ADC16_BASE))
     {
+#if BOARD == CANDLE
+        BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
         PRINTF("ADC Auto calibration failed.\r\n");
         BOARD_WriteLEDs(true, false, false);
+#endif
     }
     ADC16_EnableHardwareTrigger(ADC16_BASE, false); /* Make sure the software trigger is used. */
 

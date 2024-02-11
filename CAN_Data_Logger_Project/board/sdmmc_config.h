@@ -15,7 +15,12 @@
 #ifdef MMC_ENABLED
 #include "fsl_mmc.h"
 #endif
-#include "clock_config.h"
+#include "board_select.h"
+#if BOARD == CANDLE
+#include "clock_config_candle.h"
+#elif BOARD == FRDM
+#include "clock_config_frdm.h"
+#endif
 #include "fsl_gpio.h"
 #include "fsl_port.h"
 #include "fsl_sdmmc_host.h"

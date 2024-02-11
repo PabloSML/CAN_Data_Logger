@@ -10,17 +10,39 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
-#include "clock_config.h"
+#include "board_select.h"
+#if BOARD == CANDLE
+#include "clock_config_candle.h"
+#elif BOARD == FRDM
+#include "clock_config_frdm.h"
+#endif
 #include "fsl_gpio.h"
 #include "fsl_port.h"
+#include <stdint.h>
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
 
-/* The board name */
-#define BOARD_NAME "FRDM-K64F"
-
+#if BOARD == CANDLE
+#define LOGIC_LED_ON  1U
+#define LOGIC_LED_OFF 0U
+#ifndef BOARD_LED_GPIO
+#define BOARD_LED_GPIO GPIOD
+#endif
+#ifndef BOARD_LED_PORT
+#define BOARD_LED_PORT PORTD
+#endif
+#ifndef BOARD_LED_0_PIN
+#define BOARD_LED_0_PIN 2U
+#endif
+#ifndef BOARD_LED_1_PIN
+#define BOARD_LED_1_PIN 0U
+#endif
+#ifndef BOARD_LED_2_PIN
+#define BOARD_LED_2_PIN 1U
+#endif
+#elif BOARD == FRDM
 /* The UART to use for debug messages. */
 #define BOARD_DEBUG_UART_TYPE     kSerialPort_Uart
 #define BOARD_DEBUG_UART_BASEADDR (uint32_t) UART0
@@ -152,6 +174,7 @@
 
 /* Board accelerometer driver */
 #define BOARD_ACCEL_FXOS
+#endif /* BOARD == FRDM */
 
 #if defined(__cplusplus)
 extern "C" {
@@ -160,8 +183,13 @@ extern "C" {
 /*******************************************************************************
  * API
  ******************************************************************************/
+#if BOARD == CANDLE
+void BOARD_WriteLEDs(uint8_t val);
+void BOARD_WriteLED(uint32_t led_pin, uint8_t level);
+#elif BOARD == FRDM
 void BOARD_InitDebugConsole(void);
 void BOARD_WriteLEDs(bool red, bool green, bool blue);
+#endif
 #if defined(SDK_I2C_BASED_COMPONENT_USED) && SDK_I2C_BASED_COMPONENT_USED
 void BOARD_I2C_Init(I2C_Type *base, uint32_t clkSrc_Hz);
 status_t BOARD_I2C_Send(I2C_Type *base,

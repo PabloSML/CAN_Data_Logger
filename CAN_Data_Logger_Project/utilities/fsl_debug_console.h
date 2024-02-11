@@ -45,7 +45,7 @@ extern serial_handle_t g_serialHandle; /*!< serial manager handle */
  * to be redefined in project setting.
  */
 #ifndef SDK_DEBUGCONSOLE
-#define SDK_DEBUGCONSOLE DEBUGCONSOLE_REDIRECT_TO_SDK
+#define SDK_DEBUGCONSOLE DEBUGCONSOLE_DISABLE
 #endif
 
 #if defined(SDK_DEBUGCONSOLE) && !(SDK_DEBUGCONSOLE)
