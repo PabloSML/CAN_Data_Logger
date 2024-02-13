@@ -260,20 +260,20 @@ void BOARD_BootClockRUN(void)
     CLOCK_SetSimConfig(&simConfig_BOARD_BootClockRUN);
     /* Set SystemCoreClock variable. */
     SystemCoreClock = BOARD_BOOTCLOCKRUN_CORE_CLOCK;
-    /* Set RTC_CLKOUT source. */
-    CLOCK_SetRtcClkOutClock(SIM_RTC_CLKOUT_SEL_RTC32KCLK_CLK);
-    /* Enable USB FS clock. */
-    CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, SIM_USB_CLK_48000000HZ);
-    /* Set SDHC clock source. */
-    CLOCK_SetSdhc0Clock(SIM_SDHC_CLK_SEL_PLLFLLSEL_CLK);
+    // /* Set RTC_CLKOUT source. */
+    // CLOCK_SetRtcClkOutClock(SIM_RTC_CLKOUT_SEL_RTC32KCLK_CLK);
+    // /* Enable USB FS clock. */
+    // CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, SIM_USB_CLK_48000000HZ);
+    // /* Set SDHC clock source. */
+    // CLOCK_SetSdhc0Clock(SIM_SDHC_CLK_SEL_PLLFLLSEL_CLK);
     // /* Enable USB FS clock. */
     // CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcPll0, SIM_USB_CLK_120000000HZ);
     // /* Set SDHC clock source. */
     // CLOCK_SetSdhc0Clock(SIM_SDHC_CLK_SEL_OSCERCLK_CLK);
-    /* Set CLKOUT source. */
-    CLOCK_SetClkOutClock(SIM_CLKOUT_SEL_FLEXBUS_CLK);
-    /* Set debug trace clock source. */
-    CLOCK_SetTraceClock(SIM_TRACE_CLK_SEL_CORE_SYSTEM_CLK);
+    // /* Set CLKOUT source. */
+    // CLOCK_SetClkOutClock(SIM_CLKOUT_SEL_FLEXBUS_CLK);
+    // /* Set debug trace clock source. */
+    // CLOCK_SetTraceClock(SIM_TRACE_CLK_SEL_CORE_SYSTEM_CLK);
 }
 
 /*******************************************************************************

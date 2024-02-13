@@ -184,7 +184,7 @@ const mcg_config_t mcgConfig_BOARD_BootClockRUN = {
         },
 };
 const sim_clock_config_t simConfig_BOARD_BootClockRUN = {
-    .pllFllSel = SIM_PLLFLLSEL_MCGPLLCLK_CLK, /* PLLFLL select: MCGPLLCLK clock */
+    .pllFllSel = SIM_PLLFLLSEL_IRC48MCLK_CLK, /* PLLFLL select: MCGPLLCLK clock */
     .er32kSrc  = SIM_OSC32KSEL_RTC32KCLK_CLK, /* OSC32KSEL select: RTC32KCLK clock (32.768kHz) */
     .clkdiv1   = 0x1240000U,                  /* SIM_CLKDIV1 - OUTDIV1: /1, OUTDIV2: /2, OUTDIV3: /3, OUTDIV4: /5 */
 };
@@ -219,19 +219,19 @@ void BOARD_BootClockRUN(void)
     CLOCK_SetSimConfig(&simConfig_BOARD_BootClockRUN);
     /* Set SystemCoreClock variable. */
     SystemCoreClock = BOARD_BOOTCLOCKRUN_CORE_CLOCK;
-    /* Enable USB FS clock. */
-    CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcPll0, SIM_USB_CLK_120000000HZ);
-    /* Set enet timestamp clock source. */
-    CLOCK_SetEnetTime0Clock(SIM_ENET_1588T_CLK_SEL_OSCERCLK_CLK);
-    /* Set RMII clock source. */
-    CLOCK_SetRmii0Clock(SIM_ENET_RMII_CLK_SEL_EXTAL_CLK);
-    /* Set SDHC clock source. */
-    // CLOCK_SetSdhc0Clock(SIM_SDHC_CLK_SEL_OSCERCLK_CLK);
-    CLOCK_SetSdhc0Clock(SIM_SDHC_CLK_SEL_PLLFLLSEL_CLK);
-    /* Set CLKOUT source. */
-    CLOCK_SetClkOutClock(SIM_CLKOUT_SEL_FLEXBUS_CLK);
-    /* Set debug trace clock source. */
-    CLOCK_SetTraceClock(SIM_TRACE_CLK_SEL_CORE_SYSTEM_CLK);
+    // /* Enable USB FS clock. */
+    // CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcPll0, SIM_USB_CLK_120000000HZ);
+    // /* Set enet timestamp clock source. */
+    // CLOCK_SetEnetTime0Clock(SIM_ENET_1588T_CLK_SEL_OSCERCLK_CLK);
+    // /* Set RMII clock source. */
+    // CLOCK_SetRmii0Clock(SIM_ENET_RMII_CLK_SEL_EXTAL_CLK);
+    // /* Set SDHC clock source. */
+    // // CLOCK_SetSdhc0Clock(SIM_SDHC_CLK_SEL_OSCERCLK_CLK);
+    // CLOCK_SetSdhc0Clock(SIM_SDHC_CLK_SEL_PLLFLLSEL_CLK);
+    // /* Set CLKOUT source. */
+    // CLOCK_SetClkOutClock(SIM_CLKOUT_SEL_FLEXBUS_CLK);
+    // /* Set debug trace clock source. */
+    // CLOCK_SetTraceClock(SIM_TRACE_CLK_SEL_CORE_SYSTEM_CLK);
 }
 
 /*******************************************************************************

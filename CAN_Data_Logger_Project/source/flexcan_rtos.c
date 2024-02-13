@@ -195,6 +195,7 @@ void FlexCanTask(void *pvParameters)
     while (1)
     {
         vTaskDelay(5);
+        RTC_GetDatetime(RTC, &can_msg.timestamp);
         can_msg.id = 0x223;
         can_msg.length = 8;
         can_msg.data[0] = 0x01;

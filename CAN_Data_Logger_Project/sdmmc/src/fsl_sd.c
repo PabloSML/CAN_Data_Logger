@@ -2036,16 +2036,16 @@ static status_t sdcard_init(sd_card_t *card)
         return kStatus_SDMMC_SendScrFailed;
     }
 
-    /* Set to 4-bit data bus mode. */
-    if ((card->flags & (uint32_t)kSD_Support4BitWidthFlag) != 0U)
-    {
-        error = SD_SetDataBusWidth(card, kSDMMC_BusWdith4Bit);
-        if (kStatus_Success != error)
-        {
-            return kStatus_SDMMC_SetDataBusWidthFailed;
-        }
-        SDMMCHOST_SetCardBusWidth(card->host, kSDMMC_BusWdith4Bit);
-    }
+    // /* Set to 4-bit data bus mode. */
+    // if ((card->flags & (uint32_t)kSD_Support4BitWidthFlag) != 0U)
+    // {
+    //     error = SD_SetDataBusWidth(card, kSDMMC_BusWdith4Bit);
+    //     if (kStatus_Success != error)
+    //     {
+    //         return kStatus_SDMMC_SetDataBusWidthFailed;
+    //     }
+    //     SDMMCHOST_SetCardBusWidth(card->host, kSDMMC_BusWdith4Bit);
+    // }
 
     /* try to get card current status */
     error = SD_ReadStatus(card);

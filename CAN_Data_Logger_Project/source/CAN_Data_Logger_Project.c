@@ -129,18 +129,18 @@ int main(void) {
     BOARD_InitDebugConsole();
 #endif
 
-    op_mode_t op_mode;
+    op_mode_t op_mode = LOGGER_MODE;
 
     // PRINTF("CAN EXISTS.\n");
 
-    if (GPIO_PinRead(BOARD_MODE_GPIO, BOARD_MODE_PIN) == BOARD_MODE_DRIVE)
-    {
-        op_mode = DRIVE_MODE;
-    }
-    else
-    {
-        op_mode = LOGGER_MODE;
-    }
+    // if (GPIO_PinRead(BOARD_MODE_GPIO, BOARD_MODE_PIN) == BOARD_MODE_DRIVE)
+    // {
+    //     op_mode = DRIVE_MODE;
+    // }
+    // else
+    // {
+    //     op_mode = LOGGER_MODE;
+    // }
 
     SYSMPU_Enable(SYSMPU, false);       //Que hace? No sé
 
