@@ -68,6 +68,7 @@ board: FRDM-K64F
 #define SIM_OSC32KSEL_RTC32KCLK_CLK 2U         /*!< OSC32KSEL select: RTC32KCLK clock (32.768kHz) */
 #define SIM_PLLFLLSEL_IRC48MCLK_CLK 3U         /*!< PLLFLL select: IRC48MCLK clock */
 #define SIM_PLLFLLSEL_MCGPLLCLK_CLK 1U         /*!< PLLFLL select: MCGPLLCLK clock */
+#define SIM_SDHC_CLK_SEL_PLLFLLSEL_CLK     1U  /*!< SDHC clock select: PLLFLLSEL output clock */
 #define SIM_SDHC_CLK_SEL_OSCERCLK_CLK 2U       /*!< SDHC clock select: OSCERCLK clock */
 #define SIM_TRACE_CLK_SEL_CORE_SYSTEM_CLK 1U   /*!< Trace clock select: Core/system clock */
 #define SIM_USB_CLK_120000000HZ 120000000U     /*!< Input SIM frequency for USB: 120000000Hz */
@@ -225,7 +226,8 @@ void BOARD_BootClockRUN(void)
     /* Set RMII clock source. */
     CLOCK_SetRmii0Clock(SIM_ENET_RMII_CLK_SEL_EXTAL_CLK);
     /* Set SDHC clock source. */
-    CLOCK_SetSdhc0Clock(SIM_SDHC_CLK_SEL_OSCERCLK_CLK);
+    // CLOCK_SetSdhc0Clock(SIM_SDHC_CLK_SEL_OSCERCLK_CLK);
+    CLOCK_SetSdhc0Clock(SIM_SDHC_CLK_SEL_PLLFLLSEL_CLK);
     /* Set CLKOUT source. */
     CLOCK_SetClkOutClock(SIM_CLKOUT_SEL_FLEXBUS_CLK);
     /* Set debug trace clock source. */

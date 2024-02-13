@@ -170,7 +170,7 @@ void BOARD_InitPins(void)
     BOARD_InitModePin();
     BOARD_InitLEDsPins();
     BOARD_InitSDHCPins();
-    // BOARD_InitCANPins();
+    BOARD_InitCANPins();
 
     // /* PORTA2 (pin 36) is configured as TRACE_SWO */
     // PORT_SetPinMux(PORTA, 2U, kPORT_MuxAlt7);
@@ -896,7 +896,7 @@ void BOARD_InitSDHCPins(void)
     GPIO_PinInit(BOARD_SDHC_CD_GPIO, BOARD_SDHC_CD_PIN, &SDHC_CD_config);
 
     const port_pin_config_t SDHC0_D1 = {/* Internal pull-up/down resistor is disabled */
-                                        kPORT_PullDisable,
+                                        kPORT_PullUp,
                                         /* Fast slew rate is configured */
                                         kPORT_FastSlewRate,
                                         /* Passive filter is disabled */
@@ -904,7 +904,7 @@ void BOARD_InitSDHCPins(void)
                                         /* Open drain is disabled */
                                         kPORT_OpenDrainDisable,
                                         /* Low drive strength is configured */
-                                        kPORT_LowDriveStrength,
+                                        kPORT_HighDriveStrength,
                                         /* Pin is configured as SDHC0_D1 */
                                         kPORT_MuxAlt4,
                                         /* Pin Control Register fields [15:0] are not locked */
@@ -913,7 +913,7 @@ void BOARD_InitSDHCPins(void)
     PORT_SetPinConfig(BOARD_SDHC0_D1_PORT, BOARD_SDHC0_D1_PIN, &SDHC0_D1);
 
     const port_pin_config_t SDHC0_D0 = {/* Internal pull-up/down resistor is disabled */
-                                        kPORT_PullDisable,
+                                        kPORT_PullUp,
                                         /* Fast slew rate is configured */
                                         kPORT_FastSlewRate,
                                         /* Passive filter is disabled */
@@ -921,7 +921,7 @@ void BOARD_InitSDHCPins(void)
                                         /* Open drain is disabled */
                                         kPORT_OpenDrainDisable,
                                         /* Low drive strength is configured */
-                                        kPORT_LowDriveStrength,
+                                        kPORT_HighDriveStrength,
                                         /* Pin is configured as SDHC0_D0 */
                                         kPORT_MuxAlt4,
                                         /* Pin Control Register fields [15:0] are not locked */
@@ -930,7 +930,7 @@ void BOARD_InitSDHCPins(void)
     PORT_SetPinConfig(BOARD_SDHC0_D0_PORT, BOARD_SDHC0_D0_PIN, &SDHC0_D0);
 
     const port_pin_config_t SDHC0_DCLK = {/* Internal pull-up/down resistor is disabled */
-                                          kPORT_PullDisable,
+                                          kPORT_PullUp,
                                           /* Fast slew rate is configured */
                                           kPORT_FastSlewRate,
                                           /* Passive filter is disabled */
@@ -938,7 +938,7 @@ void BOARD_InitSDHCPins(void)
                                           /* Open drain is disabled */
                                           kPORT_OpenDrainDisable,
                                           /* Low drive strength is configured */
-                                          kPORT_LowDriveStrength,
+                                          kPORT_HighDriveStrength,
                                           /* Pin is configured as SDHC0_DCLK */
                                           kPORT_MuxAlt4,
                                           /* Pin Control Register fields [15:0] are not locked */
@@ -947,7 +947,7 @@ void BOARD_InitSDHCPins(void)
     PORT_SetPinConfig(BOARD_SDHC0_DCLK_PORT, BOARD_SDHC0_DCLK_PIN, &SDHC0_DCLK);
 
     const port_pin_config_t SDHC0_CMD = {/* Internal pull-up/down resistor is disabled */
-                                         kPORT_PullDisable,
+                                         kPORT_PullUp,
                                          /* Fast slew rate is configured */
                                          kPORT_FastSlewRate,
                                          /* Passive filter is disabled */
@@ -955,7 +955,7 @@ void BOARD_InitSDHCPins(void)
                                          /* Open drain is disabled */
                                          kPORT_OpenDrainDisable,
                                          /* Low drive strength is configured */
-                                         kPORT_LowDriveStrength,
+                                         kPORT_HighDriveStrength,
                                          /* Pin is configured as SDHC0_CMD */
                                          kPORT_MuxAlt4,
                                          /* Pin Control Register fields [15:0] are not locked */
@@ -964,7 +964,7 @@ void BOARD_InitSDHCPins(void)
     PORT_SetPinConfig(BOARD_SDHC0_CMD_PORT, BOARD_SDHC0_CMD_PIN, &SDHC0_CMD);
 
     const port_pin_config_t SDHC0_D3 = {/* Internal pull-up/down resistor is disabled */
-                                        kPORT_PullDisable,
+                                        kPORT_PullUp,
                                         /* Fast slew rate is configured */
                                         kPORT_FastSlewRate,
                                         /* Passive filter is disabled */
@@ -972,7 +972,7 @@ void BOARD_InitSDHCPins(void)
                                         /* Open drain is disabled */
                                         kPORT_OpenDrainDisable,
                                         /* Low drive strength is configured */
-                                        kPORT_LowDriveStrength,
+                                        kPORT_HighDriveStrength,
                                         /* Pin is configured as SDHC0_D3 */
                                         kPORT_MuxAlt4,
                                         /* Pin Control Register fields [15:0] are not locked */
@@ -981,7 +981,7 @@ void BOARD_InitSDHCPins(void)
     PORT_SetPinConfig(BOARD_SDHC0_D3_PORT, BOARD_SDHC0_D3_PIN, &SDHC0_D3);
 
     const port_pin_config_t SDHC0_D2 = {/* Internal pull-up/down resistor is disabled */
-                                        kPORT_PullDisable,
+                                        kPORT_PullUp,
                                         /* Fast slew rate is configured */
                                         kPORT_FastSlewRate,
                                         /* Passive filter is disabled */
@@ -989,7 +989,7 @@ void BOARD_InitSDHCPins(void)
                                         /* Open drain is disabled */
                                         kPORT_OpenDrainDisable,
                                         /* Low drive strength is configured */
-                                        kPORT_LowDriveStrength,
+                                        kPORT_HighDriveStrength,
                                         /* Pin is configured as SDHC0_D2 */
                                         kPORT_MuxAlt4,
                                         /* Pin Control Register fields [15:0] are not locked */
@@ -998,7 +998,11 @@ void BOARD_InitSDHCPins(void)
     PORT_SetPinConfig(BOARD_SDHC0_D2_PORT, BOARD_SDHC0_D2_PIN, &SDHC0_D2);
 
     const port_pin_config_t SDHC_CD = {/* Internal pull-down resistor is enabled */
+#if BOARD == CANDLE
                                        kPORT_PullUp,
+#elif BOARD == FRDM
+                                       kPORT_PullDown,
+#endif    
                                        /* Slow slew rate is configured */
                                        kPORT_SlowSlewRate,
                                        /* Passive filter is disabled */

@@ -8,6 +8,9 @@
 
 #include "fsl_sdmmc_host.h"
 #include "fsl_sdmmc_common.h"
+#include "board_select.h"
+#include "board.h"
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -301,6 +304,11 @@ status_t SDMMCHOST_TransferFunction(sdmmchost_t *host, sdmmchost_transfer_t *con
                                 SDMMCHOST_TRANSFER_COMPLETE_TIMEOUT, &event)) ||
             ((event & SDMMC_OSA_EVENT_TRANSFER_CMD_FAIL) != 0U))
         {
+#if BOARD == CANDLE
+            BOARD_WriteLEDs(5);
+#elif BOARD == FRDM
+            BOARD_WriteLEDs(true, true, true);
+#endif
             error = kStatus_Fail;
         }
         else

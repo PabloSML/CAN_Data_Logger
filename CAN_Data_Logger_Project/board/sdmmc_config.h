@@ -41,7 +41,11 @@
 #define BOARD_SDMMC_SD_CD_PORT_IRQ         PORTE_IRQn
 #define BOARD_SDMMC_SD_CD_IRQ_PRIORITY     6U
 #define BOARD_SDMMC_SD_CD_INTTERUPT_TYPE   kPORT_InterruptEitherEdge
+#if BOARD == CANDLE
+#define BOARD_SDMMC_SD_CD_INSERT_LEVEL     (0U)
+#elif BOARD == FRDM
 #define BOARD_SDMMC_SD_CD_INSERT_LEVEL     (1U)
+#endif
 #define BOARD_SDMMC_SD_CD_PORT_IRQ_HANDLER PORTE_IRQHandler
 /* @brief card detect type
  *
