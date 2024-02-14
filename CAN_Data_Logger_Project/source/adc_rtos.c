@@ -8,7 +8,6 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include "board_select.h"
 #include "board.h"
 #include "MK64F12.h"
 #include "core_cm4.h"
@@ -56,12 +55,12 @@ void ADC16_IRQ_HANDLER_FUNC(void)
     float analogValue = CalcAnalogValue(adcValue, ADC16_VREF, ADC16_BIT_RESOLUTION);
     PRINTF("ADC value under threshold. Register value = %d, Analog value = %d.%d%dV\r\n", adcValue, (int)(analogValue+0.005f), (int)((analogValue+0.005f) * 10) % 10, (int)((analogValue+0.005f) * 100) % 10);
 #endif
-    // Wake up the shutdown task
     if (taskRunning)
     {
         taskRunning = false;
         DisableIRQ(ADC16_IRQn);
         ADC16_Deinit(ADC16_BASE);
+        // Wake up the shutdown task
         xSemaphoreGiveFromISR(s_ShutdownSemaphore, &xHigherPriorityTaskWokenByPost);
         if (xHigherPriorityTaskWokenByPost == pdTRUE)
         {
@@ -77,7 +76,12 @@ static void SetIRQPriority(IRQn_Type irq, uint32_t priority)
 
 static int CalcDigitalValue(float analogValue, float refVoltage, uint8_t bitResolution)
 {
+#if BOARD == CANDLE
+    float voltageDivider =  220.0 / (220.0 + 10000.0);
+    return (int)((((analogValue * voltageDivider) / refVoltage) * (1 << bitResolution)) - 1);
+#elif BOARD == FRDM
     return (int)(((analogValue / refVoltage) * (1 << bitResolution)) - 1);
+#endif
 }
 
 #if ADC16_DEBUG_PRINT
@@ -95,11 +99,16 @@ void ShutdownTask(void *pvParameters)
     {
         if (xSemaphoreTake(s_ShutdownSemaphore, portMAX_DELAY) == pdTRUE)
         {
+#if BOARD == CANDLE
+            BOARD_WriteLEDs(0b001);
+#elif BOARD == FRDM
+            BOARD_WriteLEDs(true, true, true);
+#endif
             // Stop app tasks
             StopLogging();
             StopFlexCAN();
 #if BOARD == CANDLE
-            BOARD_WriteLEDs(0);
+            BOARD_WriteLEDs(0b100);
 #elif BOARD == FRDM
             BOARD_WriteLEDs(true, true, true);
 #endif
@@ -155,9 +164,9 @@ void Init_ADC(TaskHandle_t* handle)
     adcCompareConfig.value1 = CalcDigitalValue(ADC16_LOW_POWER_THRESHOLD, ADC16_VREF, ADC16_BIT_RESOLUTION);
     ADC16_SetHardwareCompareConfig(ADC16_BASE, &adcCompareConfig);
 
-// #if ACTIVE_ADC == CANDLE_ADC
-//     ADC16_SetChannelMuxMode(ADC16_BASE, kADC16_ChannelMuxB);
-// #endif
+#if BOARD == CANDLE
+    ADC16_SetChannelMuxMode(ADC16_BASE, kADC16_ChannelMuxB);
+#endif
 
     // Only triggers if the comparison condition is met (i.e. low power)
     EnableIRQ(ADC16_IRQn);

@@ -124,12 +124,23 @@ static int writeToBuffer(char* buffer, int bufferIndex, can_msg_t* canMsg) {
     return bufferIndex;
 }
 
+static int writeShutdownMsgToBuffer(char* buffer, int bufferIndex) {
+    rtc_datetime_t date;
+    RTC_GetDatetime(RTC, &date);
+    bufferIndex = writeDateToBuffer(buffer, bufferIndex, &date);
+    char shutdownMsg[] = "Safe shutdown triggered\r\n";
+    for (int i = 0; i < 25; ++i) {
+        buffer[bufferIndex++] = shutdownMsg[i];
+    }
+    return bufferIndex;
+}
+
 static void CloseLoggingFile(void)
 {
     if (fileOpen)
     {
-        if (bufferIndex > 0)
-            f_write(&g_fileObject, buffer, bufferIndex, &bytesWritten);
+        bufferIndex = writeShutdownMsgToBuffer(buffer, bufferIndex);
+        f_write(&g_fileObject, buffer, bufferIndex, &bytesWritten);
         f_close(&g_fileObject);
         fileOpen = false;
     }
