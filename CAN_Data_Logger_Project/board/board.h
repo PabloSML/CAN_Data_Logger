@@ -42,6 +42,16 @@
 #ifndef BOARD_LED_2_PIN
 #define BOARD_LED_2_PIN 1U
 #endif
+
+/* LED error codes */
+#define BOARD_CODE_1_SHUTDOWN   1U
+#define BOARD_CODE_2_CAN        2U
+#define BOARD_CODE_3_DRIVEUP    1U
+#define BOARD_CODE_4_SDWRITE    4U
+#define BOARD_CODE_5_RESERVED   5U
+#define BOARD_CODE_6_SDFAIL     6U
+#define BOARD_CODE_7_RESERVED   7U
+
 #elif BOARD == FRDM
 /* The UART to use for debug messages. */
 #define BOARD_DEBUG_UART_TYPE     kSerialPort_Uart
@@ -119,6 +129,15 @@
 #ifndef BOARD_LED_BLUE_GPIO_PIN
 #define BOARD_LED_BLUE_GPIO_PIN 21U
 #endif
+
+/* LED error codes */
+#define BOARD_CODE_1_ERRNAME 1U
+#define BOARD_CODE_2_ERRNAME 2U
+#define BOARD_CODE_3_ERRNAME 3U
+#define BOARD_CODE_4_ERRNAME 4U
+#define BOARD_CODE_5_ERRNAME 5U
+#define BOARD_CODE_6_ERRNAME 6U
+#define BOARD_CODE_7_ERRNAME 7U
 
 #define BOARD_ARDUINO_INT_IRQ   (PORTC_IRQn)
 #define BOARD_ARDUINO_I2C_IRQ   (I2C0_IRQn)

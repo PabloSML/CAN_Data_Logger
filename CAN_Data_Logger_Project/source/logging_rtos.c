@@ -18,10 +18,12 @@
  * Definitions
  ******************************************************************************/
 
-#define DEMO_WRITE_TIMES 10U
 #define PRINT_CAN_MSG 0
-#define FIRST_MSG_LIGHT 1
+#define FIRST_MSG_LIGHT 0
 #define CREATE_DIR 1
+#if BOARD == FRDM
+#define DEMO_WRITE_TIMES 10U
+#endif
 
 /*******************************************************************************
  * Prototypes
@@ -179,7 +181,9 @@ void FileAccessTask(void *pvParameters)
 {
     rtc_datetime_t date;
     // UINT bytesWritten   = 0U;
+#if BOARD == FRDM
     uint32_t writeTimes = 0U;
+#endif
     FRESULT error;
 
     xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
@@ -197,7 +201,8 @@ void FileAccessTask(void *pvParameters)
             if (error)
             {
 #if BOARD == CANDLE
-                BOARD_WriteLEDs(3);
+                BOARD_WriteLED(BOARD_LED_2_PIN, LOGIC_LED_ON);
+                BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_ON);
 #elif BOARD == FRDM
                 BOARD_WriteLEDs(true, false, false);
                 PRINTF("Create file failed with error code %d.\r\n", error);
@@ -208,7 +213,8 @@ void FileAccessTask(void *pvParameters)
         else
         {
 #if BOARD == CANDLE
-            BOARD_WriteLEDs(4);
+            BOARD_WriteLED(BOARD_LED_2_PIN, LOGIC_LED_ON);
+            BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_ON);
 #elif BOARD == FRDM
             BOARD_WriteLEDs(true, false, false);
             PRINTF("Open file failed with error code %d.\r\n", error);
@@ -225,7 +231,8 @@ void FileAccessTask(void *pvParameters)
     {
         // Handle error
 #if BOARD == CANDLE
-        BOARD_WriteLEDs(4);
+        BOARD_WriteLED(BOARD_LED_2_PIN, LOGIC_LED_ON);
+        BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_ON);
 #elif BOARD == FRDM
         BOARD_WriteLEDs(true, false, false);
         PRINTF("Write file header failed with error code %d.\r\n", error);
@@ -234,9 +241,7 @@ void FileAccessTask(void *pvParameters)
         return; // Exit the task if header can't be written
     }
 
-#if BOARD == CANDLE
-    BOARD_WriteLEDs(5);
-#elif BOARD == FRDM
+#if BOARD == FRDM
     BOARD_WriteLEDs(true, true, false);
 #endif
 
@@ -273,8 +278,6 @@ void FileAccessTask(void *pvParameters)
             PRINTF("No pude encontrar los datos en la queue :(\r\n");
         }
 
-        // if (writeTimes < DEMO_WRITE_TIMES)
-        // {
         bufferIndex = writeToBuffer(buffer, bufferIndex, &canMsg);
 
         if (bufferIndex >= bufferWriteThreshold) // Threshold to write, adjust as needed
@@ -283,7 +286,8 @@ void FileAccessTask(void *pvParameters)
             if (error || (bytesWritten != bufferIndex))
             {
 #if BOARD == CANDLE
-                BOARD_WriteLEDs(7);
+                BOARD_WriteLED(BOARD_LED_2_PIN, LOGIC_LED_ON);
+                BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_ON);
 #elif BOARD == FRDM
                 PRINTF("Write file failed with error code %d.\r\n", error);
                 BOARD_WriteLEDs(true, false, false);
@@ -293,20 +297,15 @@ void FileAccessTask(void *pvParameters)
             }
             bufferIndex = 0; // Reset buffer index after writing
 
+#if BOARD == FRDM
             if (++writeTimes == DEMO_WRITE_TIMES)
             {
-                // PRINTF("TASK: finished.\r\n");
-                CloseLoggingFile();
-#if BOARD == CANDLE
-                BOARD_WriteLEDs(0);
-#elif BOARD == FRDM
+                // CloseLoggingFile();
                 BOARD_WriteLEDs(false, true, false);
-#endif
-                // xTaskNotifyWait(ULONG_MAX, ULONG_MAX, NULL, portMAX_DELAY);
-                break;
+                // break;
             }
+#endif
         }
-        // }
     }
     vTaskSuspend(NULL);
 }
@@ -327,7 +326,7 @@ void CardDetectTask(void *pvParameters)
     if (SD_HostInit(&g_sd) == kStatus_Success)
     {
         sdHostInit = true;
-        PRINTF("\r\nPlease insert a card into board.\r\n");
+        // PRINTF("\r\nPlease insert a card into board.\r\n");
         while (true)
         {
             /* take card detect semaphore */
@@ -339,7 +338,7 @@ void CardDetectTask(void *pvParameters)
 
                     if (s_cardInserted)
                     {
-                        PRINTF("\r\nCard inserted.\r\n");
+                        // PRINTF("\r\nCard inserted.\r\n");
                         sdCardInit = true;
                         /* power off card */
                         SD_SetCardPower(&g_sd, false);
@@ -351,7 +350,7 @@ void CardDetectTask(void *pvParameters)
                             continue;
                         }
 #if BOARD == CANDLE
-                        BOARD_WriteLEDs(2);
+                        // BOARD_WriteLEDs(2);
 #elif BOARD == FRDM
                         PRINTF("\r\nFile system ready.\r\n");
                         BOARD_WriteLEDs(false, false, true);
@@ -385,7 +384,11 @@ static status_t DEMO_MakeFileSystem(void)
 
     if (f_mount(&g_fileSystem, driverNumberBuffer, 0U))
     {
-        PRINTF("Mount volume failed.\r\n");
+#if BOARD == CANDLE
+        BOARD_WriteLED(BOARD_LED_2_PIN, LOGIC_LED_ON);
+        BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_ON);
+#endif
+        // PRINTF("Mount volume failed.\r\n");
         return kStatus_Fail;
     }
 
@@ -393,7 +396,11 @@ static status_t DEMO_MakeFileSystem(void)
     error = f_chdrive((char const *)&driverNumberBuffer[0U]);
     if (error)
     {
-        PRINTF("Change drive failed.\r\n");
+#if BOARD == CANDLE
+        BOARD_WriteLED(BOARD_LED_2_PIN, LOGIC_LED_ON);
+        BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_ON);
+#endif
+        // PRINTF("Change drive failed.\r\n");
         return kStatus_Fail;
     }
 #endif
@@ -423,7 +430,8 @@ static status_t DEMO_MakeFileSystem(void)
         else
         {
 #if BOARD == CANDLE
-            BOARD_WriteLEDs(1);
+            BOARD_WriteLED(BOARD_LED_2_PIN, LOGIC_LED_ON);
+            BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_ON);
 #elif BOARD == FRDM
             PRINTF("Make directory failed.\r\n");
             BOARD_WriteLEDs(true, false, false);

@@ -99,23 +99,23 @@ static TaskHandle_t shutdownTaskHandle;
  * Code
  ******************************************************************************/
 
-void BlinkTask(void *pvParameters)
-{
-    static uint8_t val = 0;
-    static bool led_state = true;
-    while(1)
-    {
-#if BOARD == CANDLE
-        BOARD_WriteLEDs(val);
-        val = (++val) % 8;
-#elif BOARD == FRDM
-        BOARD_WriteLEDs(led_state, !led_state, led_state);
-        led_state = !led_state;
-#endif
-        vTaskDelay(1000);
-    }
-    vTaskSuspend(NULL);
-}
+// void BlinkTask(void *pvParameters)
+// {
+//     static uint8_t val = 0;
+//     static bool led_state = true;
+//     while(1)
+//     {
+// #if BOARD == CANDLE
+//         BOARD_WriteLEDs(val);
+//         val = (++val) % 8;
+// #elif BOARD == FRDM
+//         BOARD_WriteLEDs(led_state, !led_state, led_state);
+//         led_state = !led_state;
+// #endif
+//         vTaskDelay(1000);
+//     }
+//     vTaskSuspend(NULL);
+// }
 
 /*
  * @brief   Application entry point.
@@ -129,18 +129,18 @@ int main(void) {
     BOARD_InitDebugConsole();
 #endif
 
-    op_mode_t op_mode = LOGGER_MODE;
+    op_mode_t op_mode;
 
     // PRINTF("CAN EXISTS.\n");
 
-    // if (GPIO_PinRead(BOARD_MODE_GPIO, BOARD_MODE_PIN) == BOARD_MODE_DRIVE)
-    // {
-    //     op_mode = DRIVE_MODE;
-    // }
-    // else
-    // {
-    //     op_mode = LOGGER_MODE;
-    // }
+    if (GPIO_PinRead(BOARD_MODE_GPIO, BOARD_MODE_PIN) == BOARD_MODE_DRIVE)
+    {
+        op_mode = DRIVE_MODE;
+    }
+    else
+    {
+        op_mode = LOGGER_MODE;
+    }
 
     SYSMPU_Enable(SYSMPU, false);       //Que hace? No sé
 
@@ -152,21 +152,20 @@ int main(void) {
 #elif BOARD == FRDM
         Init_RTC(true);
 #endif
-        // Init_ADC(&shutdownTaskHandle);
+        Init_ADC(&shutdownTaskHandle);
         Init_FlexCAN(&flexCanTaskHandle);
         Init_Logging(&fileAccessTaskHandle);
 
         xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
         xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
         xTaskCreate(FlexCanTask,    (char const *)"FlexCanTask",    FLEXCAN_TASK_STACK_SIZE,    NULL, FLEXCAN_TASK_PRIORITY,    &flexCanTaskHandle);
-        // xTaskCreate(ShutdownTask,   (char const *)"ShutdownTask",   SHUTDOWN_TASK_STACK_SIZE,   NULL, SHUTDOWN_TASK_PRIORITY,   &shutdownTaskHandle);
+        xTaskCreate(ShutdownTask,   (char const *)"ShutdownTask",   SHUTDOWN_TASK_STACK_SIZE,   NULL, SHUTDOWN_TASK_PRIORITY,   &shutdownTaskHandle);
     }
     else if (op_mode == DRIVE_MODE)
     {
-        Init_RTC(false);
         // xTaskCreate(BlinkTask, (char const *)"BlinkTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, NULL);
+        Init_RTC(false);
         Init_Drive();
-
         xTaskCreate(DriveTask, (char const *)"DriveTask", DRIVE_TASK_STACK_SIZE, &g_msc, DRIVE_TASK_PRIORITY, &g_msc.application_task_handle);
     }
 

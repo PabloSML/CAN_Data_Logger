@@ -57,6 +57,9 @@ void ADC16_IRQ_HANDLER_FUNC(void)
 #endif
     if (taskRunning)
     {
+#if BOARD == CANDLE
+            BOARD_WriteLED(BOARD_LED_0_PIN, LOGIC_LED_ON);
+#endif
         taskRunning = false;
         DisableIRQ(ADC16_IRQn);
         ADC16_Deinit(ADC16_BASE);
@@ -99,16 +102,11 @@ void ShutdownTask(void *pvParameters)
     {
         if (xSemaphoreTake(s_ShutdownSemaphore, portMAX_DELAY) == pdTRUE)
         {
-#if BOARD == CANDLE
-            BOARD_WriteLEDs(0b001);
-#elif BOARD == FRDM
-            BOARD_WriteLEDs(true, true, true);
-#endif
             // Stop app tasks
             StopLogging();
             StopFlexCAN();
 #if BOARD == CANDLE
-            BOARD_WriteLEDs(0b100);
+            BOARD_WriteLED(BOARD_LED_0_PIN, LOGIC_LED_OFF);
 #elif BOARD == FRDM
             BOARD_WriteLEDs(true, true, true);
 #endif

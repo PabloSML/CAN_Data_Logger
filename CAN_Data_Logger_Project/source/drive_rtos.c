@@ -117,16 +117,11 @@ void Init_Drive(void)
 void DriveTask(void *pvParameters)
 {
 #if BOARD == CANDLE
-    BOARD_WriteLEDs(0);
-#elif BOARD == FRDM
-    GPIO_PinWrite(BOARD_LED_RED_GPIO, BOARD_LED_RED_PIN, LOGIC_LED_ON);
+    BOARD_WriteLEDs(BOARD_CODE_6_SDFAIL);
 #endif
+
     USB_DeviceApplicationInit();
-#if BOARD == CANDLE
-    BOARD_WriteLEDs(1);
-#elif BOARD == FRDM
-    GPIO_PinWrite(BOARD_LED_RED_GPIO, BOARD_LED_RED_PIN, LOGIC_LED_OFF);
-#endif
+
     if (g_msc.deviceHandle)
     {
         if (xTaskCreate(USB_DeviceTask,                  /* pointer to the task */
@@ -141,7 +136,7 @@ void DriveTask(void *pvParameters)
             return;
         }
 #if BOARD == CANDLE
-        BOARD_WriteLEDs(7);
+        BOARD_WriteLEDs(BOARD_CODE_3_DRIVEUP);
 #elif BOARD == FRDM
         GPIO_PinWrite(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_PIN, LOGIC_LED_ON);
 #endif

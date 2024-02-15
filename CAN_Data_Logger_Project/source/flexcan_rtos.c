@@ -188,76 +188,59 @@ QueueHandle_t getCanMsgQueue(void){
 void FlexCanTask(void *pvParameters)
 {
     can_msg_t can_msg;
-    uint16_t msg_count = 0;
+    // uint16_t msg_count = 0;
 
-    vTaskDelay(5000);
+    // vTaskDelay(5000);
+
+    // while (1)
+    // {
+    //     vTaskDelay(5);
+    //     RTC_GetDatetime(RTC, &can_msg.timestamp);
+    //     can_msg.id = 0x223;
+    //     can_msg.length = 8;
+    //     can_msg.data[0] = 0x01;
+    //     can_msg.data[1] = 0x23;
+    //     can_msg.data[2] = 0x45;
+    //     can_msg.data[3] = 0x67;
+    //     can_msg.data[4] = 0x89;
+    //     can_msg.data[5] = 0xAB;
+    //     can_msg.data[6] = 0xCD;
+    //     can_msg.data[7] = 0xEF;
+
+    //     xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
+    // }
 
     while (1)
     {
-        vTaskDelay(5);
-        RTC_GetDatetime(RTC, &can_msg.timestamp);
-        can_msg.id = 0x223;
-        can_msg.length = 8;
-        can_msg.data[0] = 0x01;
-        can_msg.data[1] = 0x23;
-        can_msg.data[2] = 0x45;
-        can_msg.data[3] = 0x67;
-        can_msg.data[4] = 0x89;
-        can_msg.data[5] = 0xAB;
-        can_msg.data[6] = 0xCD;
-        can_msg.data[7] = 0xEF;
+        /* Start receive data through Rx Fifo */
+        rxFifoXfer.frame = &rxFrame;
+        (void)FLEXCAN_TransferReceiveFifoNonBlocking(CAN_BASE, &flexcanHandle, &rxFifoXfer);
 
-        xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
+        /* Waiting for Rx Message finish. */
+        if  (xSemaphoreTake(s_FlexCanSemaphore, portMAX_DELAY) == pdTRUE)
+        {
+#if BOARD == CANDLE
+            BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_ON);
+#endif
+            // Create a CAN message struct with the received data
+            RTC_GetDatetime(RTC, &can_msg.timestamp);
+            can_msg.id = FLEXCAN_ID_INVERSE(rxFrame.id);
+            can_msg.length = rxFrame.length;
+            can_msg.data[0] = rxFrame.dataByte7;
+            can_msg.data[1] = rxFrame.dataByte6;
+            can_msg.data[2] = rxFrame.dataByte5;
+            can_msg.data[3] = rxFrame.dataByte4;
+            can_msg.data[4] = rxFrame.dataByte3;
+            can_msg.data[5] = rxFrame.dataByte2;
+            can_msg.data[6] = rxFrame.dataByte1;
+            can_msg.data[7] = rxFrame.dataByte0;
+
+            // Send the CAN message struct to the CAN message queue
+            xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
+#if BOARD == CANDLE
+            BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_OFF);
+#endif
+        }
     }
-
-//     while (1)
-//     {
-//         /* Start receive data through Rx Fifo */
-//         rxFifoXfer.frame = &rxFrame;
-//         (void)FLEXCAN_TransferReceiveFifoNonBlocking(CAN_BASE, &flexcanHandle, &rxFifoXfer);
-
-//         /* Waiting for Rx Message finish. */
-//         if  (xSemaphoreTake(s_FlexCanSemaphore, portMAX_DELAY) == pdTRUE)
-//         {
-// #if BOARD == CANDLE
-//             switch (msg_count)
-//             {
-//             case 0:
-//                 BOARD_WriteLEDs(1);
-//                 break;
-//             case 200:
-//                 BOARD_WriteLEDs(2);
-//                 break;
-//             case 400:
-//                 BOARD_WriteLEDs(4);
-//                 break;
-//             case 600:
-//                 BOARD_WriteLEDs(7);
-//                 break;
-//             case 800:
-//                 msg_count = 0;
-//                 break;
-//             default:
-//                 break;
-//             }
-// #endif
-//             // Create a CAN message struct with the received data
-//             // RTC_GetDatetime(RTC, &can_msg.timestamp);
-//             can_msg.id = FLEXCAN_ID_INVERSE(rxFrame.id);
-//             can_msg.length = rxFrame.length;
-//             can_msg.data[0] = rxFrame.dataByte7;
-//             can_msg.data[1] = rxFrame.dataByte6;
-//             can_msg.data[2] = rxFrame.dataByte5;
-//             can_msg.data[3] = rxFrame.dataByte4;
-//             can_msg.data[4] = rxFrame.dataByte3;
-//             can_msg.data[5] = rxFrame.dataByte2;
-//             can_msg.data[6] = rxFrame.dataByte1;
-//             can_msg.data[7] = rxFrame.dataByte0;
-
-//             msg_count++;
-//             // // Send the CAN message struct to the CAN message queue
-//             // xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
-//         }
-//     }
     vTaskSuspend(NULL);
 }
