@@ -169,12 +169,15 @@ void Init_Logging(TaskHandle_t* handle)
 
 void StopLogging(void)
 {
+    CloseLoggingFile();
+#if BOARD == CANDLE
+    BOARD_WriteLED(BOARD_LED_0_PIN, LOGIC_LED_OFF);
+#endif
     if (fileOpen)
     {
         vTaskSuspend(*fileAccessTaskHandle);
     }
-    CloseLoggingFile();
-    ShutdownSDCard();
+    // ShutdownSDCard();
 }
 
 void FileAccessTask(void *pvParameters)
@@ -240,6 +243,7 @@ void FileAccessTask(void *pvParameters)
         CloseLoggingFile();
         return; // Exit the task if header can't be written
     }
+    f_sync(&g_fileObject);
 
 #if BOARD == FRDM
     BOARD_WriteLEDs(true, true, false);
@@ -295,14 +299,19 @@ void FileAccessTask(void *pvParameters)
                 CloseLoggingFile();
                 break;
             }
+            // f_sync(&g_fileObject);
             bufferIndex = 0; // Reset buffer index after writing
 
 #if BOARD == FRDM
             if (++writeTimes == DEMO_WRITE_TIMES)
             {
-                // CloseLoggingFile();
+                CloseLoggingFile();
+#if BOARD == CANDLE
+                BOARD_WriteLEDs(7);
+#elif BOARD == FRDM
                 BOARD_WriteLEDs(false, true, false);
-                // break;
+#endif
+                break;
             }
 #endif
         }

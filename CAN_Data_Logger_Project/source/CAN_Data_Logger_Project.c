@@ -147,11 +147,7 @@ int main(void) {
     if (op_mode == LOGGER_MODE)
     {
         // xTaskCreate(BlinkTask, (char const *)"BlinkTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, NULL);
-#if BOARD == CANDLE
         Init_RTC(false);
-#elif BOARD == FRDM
-        Init_RTC(true);
-#endif
         Init_ADC(&shutdownTaskHandle);
         Init_FlexCAN(&flexCanTaskHandle);
         Init_Logging(&fileAccessTaskHandle);

@@ -188,28 +188,28 @@ QueueHandle_t getCanMsgQueue(void){
 void FlexCanTask(void *pvParameters)
 {
     can_msg_t can_msg;
-    // uint16_t msg_count = 0;
+#if BOARD == FRDM
+    uint16_t msg_count = 0;
+    vTaskDelay(5000);
 
-    // vTaskDelay(5000);
+    while (1)
+    {
+        vTaskDelay(5);
+        RTC_GetDatetime(RTC, &can_msg.timestamp);
+        can_msg.id = 0x223;
+        can_msg.length = 8;
+        can_msg.data[0] = 0x01;
+        can_msg.data[1] = 0x23;
+        can_msg.data[2] = 0x45;
+        can_msg.data[3] = 0x67;
+        can_msg.data[4] = 0x89;
+        can_msg.data[5] = 0xAB;
+        can_msg.data[6] = 0xCD;
+        can_msg.data[7] = 0xEF;
 
-    // while (1)
-    // {
-    //     vTaskDelay(5);
-    //     RTC_GetDatetime(RTC, &can_msg.timestamp);
-    //     can_msg.id = 0x223;
-    //     can_msg.length = 8;
-    //     can_msg.data[0] = 0x01;
-    //     can_msg.data[1] = 0x23;
-    //     can_msg.data[2] = 0x45;
-    //     can_msg.data[3] = 0x67;
-    //     can_msg.data[4] = 0x89;
-    //     can_msg.data[5] = 0xAB;
-    //     can_msg.data[6] = 0xCD;
-    //     can_msg.data[7] = 0xEF;
-
-    //     xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
-    // }
-
+        xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
+    }
+#elif BOARD == CANDLE
     while (1)
     {
         /* Start receive data through Rx Fifo */
@@ -219,9 +219,7 @@ void FlexCanTask(void *pvParameters)
         /* Waiting for Rx Message finish. */
         if  (xSemaphoreTake(s_FlexCanSemaphore, portMAX_DELAY) == pdTRUE)
         {
-#if BOARD == CANDLE
-            BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_ON);
-#endif
+            // BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_ON);
             // Create a CAN message struct with the received data
             RTC_GetDatetime(RTC, &can_msg.timestamp);
             can_msg.id = FLEXCAN_ID_INVERSE(rxFrame.id);
@@ -237,10 +235,9 @@ void FlexCanTask(void *pvParameters)
 
             // Send the CAN message struct to the CAN message queue
             xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);
-#if BOARD == CANDLE
-            BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_OFF);
-#endif
+            // BOARD_WriteLED(BOARD_LED_1_PIN, LOGIC_LED_OFF);
         }
     }
+#endif
     vTaskSuspend(NULL);
 }

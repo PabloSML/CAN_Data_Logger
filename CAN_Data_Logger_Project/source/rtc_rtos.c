@@ -56,9 +56,9 @@ void Init_RTC(bool configureDateTime)
         rtc_datetime_t date;
         date.year   = 2024U;
         date.month  = 02U;
-        date.day    = 19U;
+        date.day    = 15U;
         date.hour   = 17U;
-        date.minute = 0;
+        date.minute = 30U;
         date.second = 0;
 
         /* RTC time counter has to be stopped before setting the date & time in the TSR register */

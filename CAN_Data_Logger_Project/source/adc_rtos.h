@@ -26,7 +26,7 @@
 #define ADC16_IRQn              ADC1_IRQn
 #define ADC16_IRQ_HANDLER_FUNC  ADC1_IRQHandler
 #define ADC16_VREF              3.0
-#define ADC16_LOW_POWER_THRESHOLD 8.0   /* Considering the resistor divider of 220 and 10k */
+#define ADC16_LOW_POWER_THRESHOLD 10.0   /* Considering the resistor divider of 220 and 10k */
 #elif BOARD == FRDM
 #define ADC16_BASE              ADC1
 #define ADC16_USER_CHANNEL      0U /* ADC1_DP0 */
