@@ -38,21 +38,20 @@
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-volatile bool txComplete = false;
-volatile bool rxComplete = false;
-flexcan_handle_t flexcanHandle;
-flexcan_mb_transfer_t txXfer, rxXfer;
-flexcan_fifo_transfer_t rxFifoXfer;
+static flexcan_handle_t flexcanHandle;
+static bool flexcan_init = false;
+static flexcan_fifo_transfer_t rxFifoXfer;
 #if (defined(USE_CANFD) && USE_CANFD)
-flexcan_fd_frame_t txFrame, rxFrame;
+static flexcan_fd_frame_t rxFrame;
 #else
-flexcan_frame_t txFrame, rxFrame;
+static flexcan_frame_t rxFrame;
 #endif
 
 static StaticQueue_t s_CanQueue;
 static uint8_t s_CanQueueStorage[CAN_QUEUE_LENGTH * CAN_QUEUE_ITEM_SIZE];
 static QueueHandle_t s_CanQueueHandle = NULL;
 
+static TaskHandle_t* flexCanTaskHandle;
 static SemaphoreHandle_t s_FlexCanSemaphore = NULL;
 static SemaphoreHandle_t s_CanMsgSemaphore = NULL;
 
@@ -75,11 +74,21 @@ static FLEXCAN_CALLBACK(flexcan_callback)
     }
 }
 
+void StopFlexCAN(void)
+{
+    if (flexcan_init)
+    {
+        vTaskSuspend(*flexCanTaskHandle);
+        flexcan_init = false;
+    }
+}
+
 /*!
  * @brief Initialize the FlexCAN
  */
-void Init_FlexCAN(void)
+void Init_FlexCAN(TaskHandle_t* handle)
 {
+    flexCanTaskHandle = handle;
     flexcan_config_t flexcanConfig;
     flexcan_rx_fifo_config_t rxFifoConfig;
 
@@ -164,6 +173,7 @@ void Init_FlexCAN(void)
     s_CanMsgSemaphore = xSemaphoreCreateBinary();
 
     s_CanQueueHandle = xQueueCreateStatic(CAN_QUEUE_LENGTH, CAN_QUEUE_ITEM_SIZE, s_CanQueueStorage, &s_CanQueue);
+    flexcan_init = true;
 }
 
 QueueHandle_t getCanMsgQueue(void){
@@ -187,14 +197,14 @@ void FlexCanTask(void *pvParameters)
             RTC_GetDatetime(RTC, &can_msg.timestamp);
             can_msg.id = FLEXCAN_ID_INVERSE(rxFrame.id);
             can_msg.length = rxFrame.length;
-            can_msg.data[0] = rxFrame.dataByte0;
-            can_msg.data[1] = rxFrame.dataByte1;
-            can_msg.data[2] = rxFrame.dataByte2;
-            can_msg.data[3] = rxFrame.dataByte3;
-            can_msg.data[4] = rxFrame.dataByte4;
-            can_msg.data[5] = rxFrame.dataByte5;
-            can_msg.data[6] = rxFrame.dataByte6;
-            can_msg.data[7] = rxFrame.dataByte7;
+            can_msg.data[0] = rxFrame.dataByte7;
+            can_msg.data[1] = rxFrame.dataByte6;
+            can_msg.data[2] = rxFrame.dataByte5;
+            can_msg.data[3] = rxFrame.dataByte4;
+            can_msg.data[4] = rxFrame.dataByte3;
+            can_msg.data[5] = rxFrame.dataByte2;
+            can_msg.data[6] = rxFrame.dataByte1;
+            can_msg.data[7] = rxFrame.dataByte0;
 
             // Send the CAN message struct to the CAN message queue
             xQueueSend(s_CanQueueHandle, &can_msg, portMAX_DELAY);

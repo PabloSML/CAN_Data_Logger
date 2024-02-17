@@ -54,7 +54,12 @@ typedef struct {
 /*
 * @brief Function that initializes the FlexCAN module
 */
-void Init_FlexCAN(void);
+void Init_FlexCAN(TaskHandle_t* handle);
+
+/*
+* @brief Function that stops the FlexCAN module
+*/
+void StopFlexCAN(void);
 
 /*
 * @brief Function that returns the queue used to store the CAN messages

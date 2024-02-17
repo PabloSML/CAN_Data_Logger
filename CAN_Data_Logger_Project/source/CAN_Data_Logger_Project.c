@@ -48,6 +48,7 @@
 #include "fsl_sysmpu.h"
 
 #include "rtc_rtos.h"
+#include "adc_rtos.h"
 #include "flexcan_rtos.h"
 #include "logging_rtos.h"
 #include "drive_rtos.h"
@@ -64,6 +65,8 @@
 #define FLEXCAN_TASK_STACK_SIZE 512
 #define FLEXCAN_TASK_PRIORITY (configMAX_PRIORITIES - 3U)
 #define DRIVE_TASK_PRIORITY (configMAX_PRIORITIES - 3U)
+#define SHUTDOWN_TASK_STACK_SIZE (512U)
+#define SHUTDOWN_TASK_PRIORITY (configMAX_PRIORITIES - 3U)
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -83,6 +86,8 @@ typedef enum
 /* Data structure of msc device, store the information ,such as class handle */
 usb_msc_struct_t g_msc;
 static TaskHandle_t fileAccessTaskHandle;
+static TaskHandle_t flexCanTaskHandle;
+static TaskHandle_t shutdownTaskHandle;
 
 /*******************************************************************************
  * Code
@@ -96,7 +101,6 @@ int main(void) {
     /* Init board hardware. */
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
-    //BOARD_InitBootPeripherals();
 #ifndef BOARD_INIT_DEBUG_CONSOLE_PERIPHERAL
     /* Init FSL debug console. */
     BOARD_InitDebugConsole();
@@ -110,22 +114,24 @@ int main(void) {
     {
         op_mode = DRIVE_MODE;
     }
-    else                                                                      
+    else
     {
         op_mode = LOGGER_MODE;
     }
-    
+
     SYSMPU_Enable(SYSMPU, false);       //Que hace? No sé
 
     if (op_mode == LOGGER_MODE)
     {
         Init_RTC(true);
-        Init_FlexCAN();
-        Init_CardDetect(&fileAccessTaskHandle);
+        Init_ADC(&shutdownTaskHandle);
+        Init_FlexCAN(&flexCanTaskHandle);
+        Init_Logging(&fileAccessTaskHandle);
 
         xTaskCreate(FileAccessTask, (char const *)"FileAccessTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, &fileAccessTaskHandle);
         xTaskCreate(CardDetectTask, (char const *)"CardDetectTask", CARDDETECT_TASK_STACK_SIZE, NULL, CARDDETECT_TASK_PRIORITY, NULL);
-        xTaskCreate(FlexCanTask,    (char const *)"FlexCanTask",    FLEXCAN_TASK_STACK_SIZE,    NULL, FLEXCAN_TASK_PRIORITY,    NULL);
+        xTaskCreate(FlexCanTask,    (char const *)"FlexCanTask",    FLEXCAN_TASK_STACK_SIZE,    NULL, FLEXCAN_TASK_PRIORITY,    &flexCanTaskHandle);
+        xTaskCreate(ShutdownTask,   (char const *)"ShutdownTask",   SHUTDOWN_TASK_STACK_SIZE,   NULL, SHUTDOWN_TASK_PRIORITY,   &shutdownTaskHandle);
     }
     else if (op_mode == DRIVE_MODE)
     {
