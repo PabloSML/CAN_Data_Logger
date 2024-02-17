@@ -14,29 +14,26 @@
 #include "fsl_adc16.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "board_select.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-#define CANDLE_ADC  0
-#define FRDM_ADC    1
-#define ACTIVE_ADC  FRDM_ADC
-
-#if ACTIVE_ADC == CANDLE_ADC
+#if BOARD == CANDLE
 #define ADC16_BASE              ADC1
-#define ADC16_USER_CHANNEL      14U /* ADC1_SE14 */
+#define ADC16_USER_CHANNEL      6U /* ADC1_SE6b */
 #define ADC16_IRQn              ADC1_IRQn
 #define ADC16_IRQ_HANDLER_FUNC  ADC1_IRQHandler
-#define ADC16_VREF              3
-#define ADC16_LOW_POWER_THRESHOLD 2
-#elif ACTIVE_ADC == FRDM_ADC
+#define ADC16_VREF              3.0
+#define ADC16_LOW_POWER_THRESHOLD 10.0   /* Considering the resistor divider of 220 and 10k */
+#elif BOARD == FRDM
 #define ADC16_BASE              ADC1
 #define ADC16_USER_CHANNEL      0U /* ADC1_DP0 */
 #define ADC16_IRQn              ADC1_IRQn
 #define ADC16_IRQ_HANDLER_FUNC  ADC1_IRQHandler
 #define ADC16_VREF              3.3
-#define ADC16_LOW_POWER_THRESHOLD 2
+#define ADC16_LOW_POWER_THRESHOLD 2.0
 #endif
 
 #define ADC16_BIT_RESOLUTION    8U

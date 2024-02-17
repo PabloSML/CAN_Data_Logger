@@ -27,9 +27,25 @@ extern "C" {
  */
 void BOARD_InitBootPins(void);
 
+#if BOARD == CANDLE
+#define BOARD_MODE_DRIVE 1U
+#define BOARD_MODE_CLK_GATE kCLOCK_PortB
+#define BOARD_MODE_GPIO GPIOB /*!<@brief GPIO device name: GPIOB */
+#define BOARD_MODE_PORT PORTB /*!<@brief PORT device name: PORTB */
+#define BOARD_MODE_PIN 3U     /*!<@brief PORTD pin index: 3 */
+#elif BOARD == FRDM
+#define BOARD_MODE_DRIVE 0U
+#define BOARD_MODE_CLK_GATE kCLOCK_PortD
 #define BOARD_MODE_GPIO GPIOD /*!<@brief GPIO device name: GPIOD */
 #define BOARD_MODE_PORT PORTD /*!<@brief PORT device name: PORTD */
 #define BOARD_MODE_PIN 1U     /*!<@brief PORTD pin index: 1 */
+#endif
+/*!
+ * @brief Configures pin routing and optionally pin electrical features.
+ *
+ */
+void BOARD_InitModePin(void);
+
 /*!
  * @brief Configures pin routing and optionally pin electrical features.
  *

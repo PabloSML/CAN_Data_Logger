@@ -55,12 +55,18 @@ void ADC16_IRQ_HANDLER_FUNC(void)
     float analogValue = CalcAnalogValue(adcValue, ADC16_VREF, ADC16_BIT_RESOLUTION);
     PRINTF("ADC value under threshold. Register value = %d, Analog value = %d.%d%dV\r\n", adcValue, (int)(analogValue+0.005f), (int)((analogValue+0.005f) * 10) % 10, (int)((analogValue+0.005f) * 100) % 10);
 #endif
-    // Wake up the shutdown task
     if (taskRunning)
     {
+// #if BOARD == CANDLE
+//         BOARD_WriteLED(BOARD_LED_0_PIN, LOGIC_LED_ON);
+// #endif
         taskRunning = false;
         DisableIRQ(ADC16_IRQn);
         ADC16_Deinit(ADC16_BASE);
+        // Wake up the shutdown task
+// #if BOARD == CANDLE
+//         BOARD_WriteLED(BOARD_LED_0_PIN, LOGIC_LED_OFF);
+// #endif
         xSemaphoreGiveFromISR(s_ShutdownSemaphore, &xHigherPriorityTaskWokenByPost);
         if (xHigherPriorityTaskWokenByPost == pdTRUE)
         {
@@ -76,7 +82,12 @@ static void SetIRQPriority(IRQn_Type irq, uint32_t priority)
 
 static int CalcDigitalValue(float analogValue, float refVoltage, uint8_t bitResolution)
 {
+#if BOARD == CANDLE
+    float voltageDivider =  220.0 / (220.0 + 10000.0);
+    return (int)((((analogValue * voltageDivider) / refVoltage) * (1 << bitResolution)) - 1);
+#elif BOARD == FRDM
     return (int)(((analogValue / refVoltage) * (1 << bitResolution)) - 1);
+#endif
 }
 
 #if ADC16_DEBUG_PRINT
@@ -94,11 +105,17 @@ void ShutdownTask(void *pvParameters)
     {
         if (xSemaphoreTake(s_ShutdownSemaphore, portMAX_DELAY) == pdTRUE)
         {
+#if BOARD == CANDLE
+            BOARD_WriteLED(BOARD_LED_0_PIN, LOGIC_LED_ON);
+#endif
             // Stop app tasks
             StopLogging();
-            StopFlexCAN();
-            BOARD_WriteLEDs(true, true, true);
-
+// #if BOARD == CANDLE
+//             BOARD_WriteLED(BOARD_LED_2_PIN, LOGIC_LED_ON);
+//             BOARD_WriteLED(BOARD_LED_0_PIN, LOGIC_LED_OFF);
+// #elif BOARD == FRDM
+//             BOARD_WriteLEDs(true, true, true);
+// #endif
             vTaskSuspend(NULL);
         }
     }
@@ -137,8 +154,12 @@ void Init_ADC(TaskHandle_t* handle)
     ADC16_Init(ADC16_BASE, &adcConfig);
     if (kStatus_Success != ADC16_DoAutoCalibration(ADC16_BASE))
     {
+#if BOARD == CANDLE
+        BOARD_WriteLEDs(0);
+#elif BOARD == FRDM
         PRINTF("ADC Auto calibration failed.\r\n");
         BOARD_WriteLEDs(true, false, false);
+#endif
     }
     ADC16_EnableHardwareTrigger(ADC16_BASE, false); /* Make sure the software trigger is used. */
 
@@ -147,9 +168,9 @@ void Init_ADC(TaskHandle_t* handle)
     adcCompareConfig.value1 = CalcDigitalValue(ADC16_LOW_POWER_THRESHOLD, ADC16_VREF, ADC16_BIT_RESOLUTION);
     ADC16_SetHardwareCompareConfig(ADC16_BASE, &adcCompareConfig);
 
-// #if ACTIVE_ADC == CANDLE_ADC
-//     ADC16_SetChannelMuxMode(ADC16_BASE, kADC16_ChannelMuxB);
-// #endif
+#if BOARD == CANDLE
+    ADC16_SetChannelMuxMode(ADC16_BASE, kADC16_ChannelMuxB);
+#endif
 
     // Only triggers if the comparison condition is met (i.e. low power)
     EnableIRQ(ADC16_IRQn);

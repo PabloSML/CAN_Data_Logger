@@ -8,6 +8,9 @@
 
 #include "fsl_sdmmc_host.h"
 #include "fsl_sdmmc_common.h"
+#include "board_select.h"
+#include "board.h"
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/

@@ -22,7 +22,12 @@
 #include "fsl_device_registers.h"
 #include "fsl_debug_console.h"
 #include "pin_mux.h"
-#include "clock_config.h"
+#include "board_select.h"
+#if BOARD == CANDLE
+#include "clock_config_candle.h"
+#elif BOARD == FRDM
+#include "clock_config_frdm.h"
+#endif
 #include "board.h"
 
 #if (defined(FSL_FEATURE_SOC_SYSMPU_COUNT) && (FSL_FEATURE_SOC_SYSMPU_COUNT > 0U))
@@ -111,9 +116,12 @@ void Init_Drive(void)
 
 void DriveTask(void *pvParameters)
 {
-    GPIO_PinWrite(BOARD_LED_RED_GPIO, BOARD_LED_RED_PIN, LOGIC_LED_ON);
+#if BOARD == CANDLE
+    BOARD_WriteLEDs(BOARD_CODE_6_SDFAIL);
+#endif
+
     USB_DeviceApplicationInit();
-    GPIO_PinWrite(BOARD_LED_RED_GPIO, BOARD_LED_RED_PIN, LOGIC_LED_OFF);
+
     if (g_msc.deviceHandle)
     {
         if (xTaskCreate(USB_DeviceTask,                  /* pointer to the task */
@@ -127,7 +135,11 @@ void DriveTask(void *pvParameters)
             usb_echo("usb device task create failed!\r\n");
             return;
         }
+#if BOARD == CANDLE
+        BOARD_WriteLEDs(BOARD_CODE_3_DRIVEUP);
+#elif BOARD == FRDM
         GPIO_PinWrite(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_PIN, LOGIC_LED_ON);
+#endif
     }
     vTaskSuspend(NULL);
 }
@@ -191,10 +203,10 @@ void USB_DeviceMscWriteTask(void *Handle)
         if (kStatus_Success != errorCode)
         {
             g_msc.read_write_error = 1;
-            usb_echo(
-                "Write error, error = 0xx%x \t Please check write request buffer size(must be less than 128 "
-                "sectors)\r\n",
-                errorCode);
+            // usb_echo(
+            //     "Write error, error = 0xx%x \t Please check write request buffer size(must be less than 128 "
+            //     "sectors)\r\n",
+            //     errorCode);
         }
         xQueueSend(g_writeBufferHandle, &writeInformationa[0], 0U);
     }
@@ -251,10 +263,10 @@ usb_status_t USB_DeviceMscCallback(class_handle_t handle, uint32_t event, void *
                 if (kStatus_Success != errorCode)
                 {
                     g_msc.read_write_error = 1;
-                    usb_echo(
-                        "Write error, error = 0xx%x \t Please check write request buffer size(must be less than 128 "
-                        "sectors)\r\n",
-                        error);
+                    // usb_echo(
+                    //     "Write error, error = 0xx%x \t Please check write request buffer size(must be less than 128 "
+                    //     "sectors)\r\n",
+                    //     error);
                     error = kStatus_USB_Error;
                 }
             }
@@ -290,10 +302,10 @@ usb_status_t USB_DeviceMscCallback(class_handle_t handle, uint32_t event, void *
             if (kStatus_Success != errorCode)
             {
                 g_msc.read_write_error = 1;
-                usb_echo(
-                    "Read error, error = 0xx%x \t Please check read request buffer size(must be less than 128 "
-                    "sectors)\r\n",
-                    error);
+                // usb_echo(
+                //     "Read error, error = 0xx%x \t Please check read request buffer size(must be less than 128 "
+                //     "sectors)\r\n",
+                //     error);
                 error = kStatus_USB_Error;
             }
             break;
@@ -495,11 +507,11 @@ void USB_DeviceApplicationInit(void)
     SYSMPU_Enable(SYSMPU, 0);
 #endif /* FSL_FEATURE_SOC_SYSMPU_COUNT */
 
-    usb_echo("Please insert disk \r\n");
+    // usb_echo("Please insert disk \r\n");
 
     if (kStatus_USB_Success != USB_DeviceMscDiskStorageInit())
     {
-        usb_echo("Disk init failed\r\n");
+        // usb_echo("Disk init failed\r\n");
         return;
     }
 #if (defined(USB_DEVICE_MSC_USE_WRITE_TASK) && (USB_DEVICE_MSC_USE_WRITE_TASK > 0))
@@ -519,11 +531,11 @@ void USB_DeviceApplicationInit(void)
     g_msc.deviceHandle = NULL;
     if (kStatus_USB_Success != USB_DeviceClassInit(CONTROLLER_ID, &msc_config_list, &g_msc.deviceHandle))
     {
-        usb_echo("USB device init failed\r\n");
+        // usb_echo("USB device init failed\r\n");
     }
     else
     {
-        usb_echo("USB device mass storage demo\r\n");
+        // usb_echo("USB device mass storage demo\r\n");
         g_msc.mscHandle = msc_config_list.config->classHandle;
     }
 
@@ -558,7 +570,7 @@ void APP_task(void *handle)
                         &g_msc.device_task_handle        /* optional task handle to create */
                         ) != pdPASS)
         {
-            usb_echo("usb device task create failed!\r\n");
+            // usb_echo("usb device task create failed!\r\n");
             return;
         }
     }
@@ -572,7 +584,7 @@ void APP_task(void *handle)
                     &g_usbWriteTaskHandle           /* optional task handle to create */
                     ) != pdPASS)
     {
-        usb_echo("write task create failed!\r\n");
+        // usb_echo("write task create failed!\r\n");
         return;
     }
 #endif

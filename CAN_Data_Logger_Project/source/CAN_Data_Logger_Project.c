@@ -33,10 +33,16 @@
  * @brief   Application entry point.
  */
 #include <stdio.h>
+#include <stdint.h>
 #include "board.h"
 #include "peripherals.h"
 #include "pin_mux.h"
-#include "clock_config.h"
+#include "board_select.h"
+#if BOARD == CANDLE
+#include "clock_config_candle.h"
+#elif BOARD == FRDM
+#include "clock_config_frdm.h"
+#endif
 #include "MK64F12.h"
 #include "fsl_debug_console.h"
 #include "fsl_gpio.h"
@@ -93,24 +99,41 @@ static TaskHandle_t shutdownTaskHandle;
  * Code
  ******************************************************************************/
 
+// void BlinkTask(void *pvParameters)
+// {
+//     static uint8_t val = 0;
+//     static bool led_state = true;
+//     while(1)
+//     {
+// #if BOARD == CANDLE
+//         BOARD_WriteLEDs(val);
+//         val = (++val) % 8;
+// #elif BOARD == FRDM
+//         BOARD_WriteLEDs(led_state, !led_state, led_state);
+//         led_state = !led_state;
+// #endif
+//         vTaskDelay(1000);
+//     }
+//     vTaskSuspend(NULL);
+// }
+
 /*
  * @brief   Application entry point.
  */
 int main(void) {
-
     /* Init board hardware. */
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
-#ifndef BOARD_INIT_DEBUG_CONSOLE_PERIPHERAL
+#if BOARD == FRDM
     /* Init FSL debug console. */
     BOARD_InitDebugConsole();
 #endif
 
     op_mode_t op_mode;
 
-    PRINTF("CAN EXISTS.\n");
+    // PRINTF("CAN EXISTS.\n");
 
-    if (GPIO_PinRead(BOARD_MODE_GPIO, BOARD_MODE_PIN) == 0)
+    if (GPIO_PinRead(BOARD_MODE_GPIO, BOARD_MODE_PIN) == BOARD_MODE_DRIVE)
     {
         op_mode = DRIVE_MODE;
     }
@@ -123,7 +146,8 @@ int main(void) {
 
     if (op_mode == LOGGER_MODE)
     {
-        Init_RTC(true);
+        // xTaskCreate(BlinkTask, (char const *)"BlinkTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, NULL);
+        Init_RTC(false);
         Init_ADC(&shutdownTaskHandle);
         Init_FlexCAN(&flexCanTaskHandle);
         Init_Logging(&fileAccessTaskHandle);
@@ -135,9 +159,9 @@ int main(void) {
     }
     else if (op_mode == DRIVE_MODE)
     {
+        // xTaskCreate(BlinkTask, (char const *)"BlinkTask", ACCESSFILE_TASK_STACK_SIZE, NULL, ACCESSFILE_TASK_PRIORITY, NULL);
         Init_RTC(false);
         Init_Drive();
-
         xTaskCreate(DriveTask, (char const *)"DriveTask", DRIVE_TASK_STACK_SIZE, &g_msc, DRIVE_TASK_PRIORITY, &g_msc.application_task_handle);
     }
 
